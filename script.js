@@ -147,6 +147,55 @@
 
   setupWhySlider();
 
+  const setupServiceCards = () => {
+    document.querySelectorAll('[data-service-card]').forEach((card) => {
+      const front = card.querySelector('.service-card-front');
+      const back = card.querySelector('.service-card-back');
+      const serviceName = card.dataset.serviceName;
+
+      const setFlipped = (isFlipped) => {
+        card.classList.toggle('is-flipped', isFlipped);
+        card.setAttribute('aria-pressed', String(isFlipped));
+        card.setAttribute('aria-label', isFlipped
+          ? `Вернуться к краткому описанию: ${serviceName}`
+          : `Показать подробности: ${serviceName}`);
+        front?.setAttribute('aria-hidden', String(isFlipped));
+        back?.setAttribute('aria-hidden', String(!isFlipped));
+      };
+
+      const toggleCard = () => setFlipped(!card.classList.contains('is-flipped'));
+
+      card.addEventListener('click', toggleCard);
+      card.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        toggleCard();
+      });
+    });
+  };
+
+  setupServiceCards();
+
+  const setupServicesAccordion = () => {
+    const accordion = document.querySelector('.services-accordion');
+    const summary = accordion?.querySelector('summary');
+    if (!accordion || !summary) return;
+
+    const syncExpandedState = () => {
+      summary.setAttribute('aria-expanded', String(accordion.open));
+    };
+
+    summary.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      accordion.open = !accordion.open;
+    });
+    accordion.addEventListener('toggle', syncExpandedState);
+    syncExpandedState();
+  };
+
+  setupServicesAccordion();
+
   document.querySelectorAll('[data-city]').forEach((element) => {
     const city = cities[element.dataset.city];
     if (!city) return;
