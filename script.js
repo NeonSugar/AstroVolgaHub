@@ -14,6 +14,22 @@
     znamenka: { name: 'Великая Знаменка', agents: 2 }
   };
 
+  // Дополнительные точки с официальной страницы «ОСАГО в Новороссии».
+  const additionalCities = {
+    blagoveshchenka: { name: 'Благовещенка', agents: 2 },
+    vodyanoe: { name: 'Водяное', agents: 1 },
+    dneprorudnoe: { name: 'Днепрорудное', agents: 1 },
+    zapovitnoe: { name: 'Заповитное', agents: 1 },
+    ivanovka: { name: 'Ивановка', agents: 1 },
+    kirillovka: { name: 'Кирилловка', agents: 1 },
+    'malaya-belozerka': { name: 'Малая Белозерка', agents: 1 },
+    mikhailovka: { name: 'Михайловка', agents: 1 },
+    novovasilevka: { name: 'Нововасильевка', agents: 1 },
+    novodneprovka: { name: 'Новоднепровка', agents: 1 },
+    priazovskoe: { name: 'Приазовское', agents: 1 },
+    rozovka: { name: 'Розовка', agents: 1 }
+  };
+
   const agentLabel = (count) => {
     if (!Number.isFinite(count)) return 'агенты рядом';
     const mod100 = count % 100;
@@ -35,6 +51,7 @@
       { selector: '.section-heading, .trust-copy, .footer-top', variant: 'reveal-up', step: 0 },
       { selector: '.map-shell', variant: 'reveal-scale', step: 0 },
       { selector: '.city-card', variant: 'reveal-up', step: 70 },
+      { selector: '.additional-cities-heading, .additional-city', variant: 'reveal-up', step: 45 },
       { selector: '.service-card', variant: 'reveal-up', step: 100 },
       { selector: '.stat', variant: 'reveal-up', step: 90 },
       { selector: '.why-slider', variant: 'reveal-up', step: 0 },
@@ -196,6 +213,61 @@
 
   setupServicesAccordion();
 
+  const setupAdditionalCities = () => {
+    const accordions = [...document.querySelectorAll('.additional-city')];
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const syncExpandedState = (accordion) => {
+      accordion.querySelector('summary')?.setAttribute('aria-expanded', String(accordion.open));
+    };
+
+    const openCity = (cityKey, { updateHash = true, scroll = true } = {}) => {
+      const target = document.querySelector(`[data-additional-city="${cityKey}"]`);
+      if (!target) return;
+
+      accordions.forEach((accordion) => {
+        accordion.open = accordion === target;
+        syncExpandedState(accordion);
+      });
+
+      if (updateHash) window.history.pushState(null, '', `#${target.id}`);
+      if (scroll) {
+        window.requestAnimationFrame(() => {
+          target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+        });
+      }
+    };
+
+    accordions.forEach((accordion) => {
+      accordion.addEventListener('toggle', () => {
+        if (accordion.open) {
+          accordion.style.background='var(--sky)';
+          accordions.forEach((other) => {
+            if (other !== accordion) {
+              other.open = false;
+              other.style.background='none';
+            }
+            syncExpandedState(other);
+          });
+        }
+        syncExpandedState(accordion);
+      });
+      syncExpandedState(accordion);
+    });
+
+    const openFromHash = () => {
+      const target = document.querySelector(location.hash);
+      const cityKey = target?.dataset.additionalCity;
+      if (cityKey) openCity(cityKey, { updateHash: false });
+    };
+
+    if (location.hash) openFromHash();
+    window.addEventListener('hashchange', openFromHash);
+    return openCity;
+  };
+
+  const openAdditionalCity = setupAdditionalCities();
+
   document.querySelectorAll('[data-city]').forEach((element) => {
     const city = cities[element.dataset.city];
     if (!city) return;
@@ -220,7 +292,8 @@
   const map = document.querySelector('#region-map');
   const tooltip = map?.querySelector('.map-tooltip');
   map?.querySelectorAll('.map-point').forEach((point) => {
-    const city = cities[point.dataset.city];
+    const cityKey = point.dataset.city || point.dataset.extraCity;
+    const city = cities[point.dataset.city] || additionalCities[point.dataset.extraCity];
     const showTooltip = () => {
       if (!tooltip || !city) return;
       const pointBox = point.getBoundingClientRect();
@@ -239,9 +312,13 @@
     point.addEventListener('mouseleave', hideTooltip);
     point.addEventListener('focus', showTooltip);
     point.addEventListener('blur', hideTooltip);
-    point.addEventListener('click', () => {
-      trackGoal('hub_city_click', { city: point.dataset.city, source: 'map' });
-      trackGoal('hub_map_click', { city: point.dataset.city });
+    point.addEventListener('click', (event) => {
+      if (point.dataset.extraCity) {
+        event.preventDefault();
+        openAdditionalCity(point.dataset.extraCity);
+      }
+      trackGoal('hub_city_click', { city: cityKey, source: 'map' });
+      trackGoal('hub_map_click', { city: cityKey });
     });
   });
 
