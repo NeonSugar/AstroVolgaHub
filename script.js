@@ -250,6 +250,10 @@
             syncExpandedState(other);
           });
         }
+        else {
+          accordion.open = false;
+          accordion.style.background='none';
+        }
         syncExpandedState(accordion);
       });
       syncExpandedState(accordion);
