@@ -13,7 +13,7 @@
 .city-call-link{color:var(--blue);font-weight:700;border-bottom:1px solid rgba(0,103,177,.28)}
 
 .city-hero-visual{aspect-ratio:1;position:relative;border-radius:50%;box-shadow:0 38px 70px rgba(0,70,120,.25);isolation:isolate}
-.city-hero-visual::before{content:"";position:absolute;width:100%;height:100%;background-image:var(--city-hero-image,url('../assets/images/berdyansk.png'));background-repeat:no-repeat;background-position:center;background-size:cover;z-index:-1}
+.city-hero-visual::before{content:"";position:absolute;height:130%; aspect-ratio: 1; inset: -15%; background-image:var(--city-hero-image,url('../assets/images/cities/berdyansk.png'));background-repeat:no-repeat;background-position:center;background-size:contain;z-index:-1}
 .city-hero-visual-generic::before{background-size:contain}
 .city-hero-visual::after{content:"";position:absolute;inset:27%;border-radius:50%;background:rgba(255,255,255,.08)}
 .city-count{position:absolute;right:5%;top:0;z-index:4;width:124px;height:124px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-content:center;text-align:center;box-shadow:0 18px 36px rgba(125,14,31,.28)}
@@ -56,6 +56,8 @@
 .agent-phone{overflow: hidden; position: relative;width:max-content;margin:9px 0 18px -8px;padding:4px 8px;border-radius:8px;color:var(--blue);font-weight:700;transition:color .25s,background .25s,box-shadow .25s}
 .agent-phones{display:grid;justify-items:start;gap:2px;margin:9px 0 18px}
 .agent-phones .agent-phone{margin:0 0 0 -8px}
+.agent-card-offsite .agent-phones{width:100%;margin:auto 0 0;padding-top:18px;border-top:1px solid var(--line);transition:border-color .25s}
+.agent-card-offsite .agent-note{margin-bottom:18px}
 .agent-map-link{overflow: hidden; position: relative;margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:15px;padding-top:18px;border-top:1px solid var(--line);color:#5f7184;font-size:13px;font-weight:600;transition:color .25s,border-color .25s}
 .agent-map-link:hover{color:var(--blue)}
 .agent-map-link svg{width:20px;margin: 5px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .3s ease}
@@ -75,6 +77,7 @@
   .agent-card:hover .agent-number,.agent-card:hover .agent-note{color:rgba(255,255,255,.7)}
   .agent-card:hover .agent-phone{color:#fff}
   .agent-card:hover .agent-map-link{color:#fff;border-color:rgba(255,255,255,.28)}
+  .agent-card:hover.agent-card-offsite .agent-phones{border-color:rgba(255,255,255,.28)}
   .agent-map-link:hover svg{background: #fff; border-radius: 4px; color: var(--red);}
 }
 .agents-empty{padding:46px 24px;margin:0;border-radius:22px;background:var(--sky);text-align:center;color:#65778a}

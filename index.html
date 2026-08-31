@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#edf5fb">
   <title>Страховые агенты в Запорожской области — ОСАГО, КАСКО | Астро-Волга</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20260824-3">
+  <link rel="stylesheet" href="styles.css?v=20260831-5">
 </head>
 <body>
   <a class="skip-link" href="#cities">Перейти к выбору города</a>
@@ -17,14 +17,55 @@
       <a class="brand" href="#" aria-label="Астро-Волга — на главную">
         <img class="brand-logo" src="assets/logo.svg" alt="Страховая компания Астро-Волга" width="240" height="44">
       </a>
+      <div class="header-search-wrap" data-header-search>
+        <button class="header-search-toggle" type="button" aria-label="Открыть поиск города" aria-controls="header-search-overlay" aria-expanded="false">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        </button>
+        <div class="header-search-overlay" id="header-search-overlay" data-header-search-overlay aria-hidden="false">
+          <div class="header-search-dialog" data-header-search-dialog aria-labelledby="header-search-title">
+            <div class="header-search-dialog-head">
+              <strong id="header-search-title">Поиск города</strong>
+              <button class="header-search-close" type="button" aria-label="Закрыть поиск">×</button>
+            </div>
+            <div class="additional-city-search header-city-search" data-city-search>
+              <div class="additional-city-search-control">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+                <input id="header-city-search-input" type="search" placeholder="Поиск города" aria-label="Поиск города или населённого пункта" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="header-city-search-suggestions" aria-expanded="false">
+                <button class="additional-city-search-clear" type="button" aria-label="Очистить поиск" hidden>×</button>
+                <div class="additional-city-suggestions" id="header-city-search-suggestions" role="listbox" hidden></div>
+              </div>
+              <p class="additional-city-search-status" aria-live="polite"></p>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="header-region" aria-label="Регион обслуживания">
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 21s7-5.3 7-12A7 7 0 1 0 5 9c0 6.7 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>
         <span>Запорожская область</span>
       </div>
-      <a class="header-phone track-phone" href="tel:88006008767">
-        <span>Бесплатный звонок</span>
-        <strong>8 (800) 600-87-67</strong>
-      </a>
+        <div class="header-actions">
+          <a class="header-phone track-phone" href="tel:88006008767" aria-label="Позвонить по номеру 8 800 600-87-67">
+            <svg class="header-phone-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7.2 3.5 4.9 4.6a2 2 0 0 0-1 2.2c1.4 6.8 6.7 12.1 13.5 13.5a2 2 0 0 0 2.2-1l1.1-2.3a1.7 1.7 0 0 0-.5-2l-3-2.3a1.7 1.7 0 0 0-2.1.1l-1.4 1.3a14.8 14.8 0 0 1-4-4L11 8.7a1.7 1.7 0 0 0 .1-2.1L9.2 4a1.7 1.7 0 0 0-2-.5Z"/>
+            </svg>
+            <span class="header-phone-copy">
+              <span>Бесплатный звонок</span>
+              <strong>8 (800) 600-87-67</strong>
+            </span>
+          </a>
+          <nav class="header-messengers" aria-label="Мессенджеры">
+            <a class="header-social-link header-social-telegram" href="https://t.me/astrovolga_bot" target="_blank" rel="noopener noreferrer" aria-label="Астро-Волга в Telegram">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21.7 3.4 18.6 20c-.2 1.2-.9 1.5-1.9.9l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-8c.4-.3-.1-.5-.6-.2L6.4 14 1.7 12.5c-1-.3-1-1 .2-1.5l18.3-7c.9-.3 1.7.2 1.5 1.4Z"/>
+              </svg>
+            </a>
+            <a class="header-social-link header-social-max" role="img" aria-label="Астро-Волга в MAX" title="MAX">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 720">
+                <path d="M350.4 9.6C141.8 20.5 4.1 184.1 12.8 390.4c3.8 90.3 40.1 168 48.7 253.7 2.2 22.2-4.2 49.6 21.4 59.3 31.5 11.9 79.8-8.1 106.2-26.4 9-6.1 17.6-13.2 24.2-22 27.3 18.1 53.2 35.6 85.7 43.4 143.1 34.3 299.9-44.2 369.6-170.3C799.6 291.2 622.5-4.6 350.4 9.6ZM269.4 504c-11.3 8.8-22.2 20.8-34.7 27.7-18.1 9.7-23.7-.4-30.5-16.4-21.4-50.9-24-137.6-11.5-190.9 16.8-72.5 72.9-136.3 150-143.1 78-6.9 150.4 32.7 183.1 104.2 72.4 159.1-112.9 316.2-256.4 218.6Z"/>
+              </svg>
+            </a>
+          </nav>
+        </div>
     </div>
   </header>
 
@@ -43,8 +84,8 @@
         </div>
         <div class="hero-visual" aria-hidden="true">
           <div class="hero-badge">
-            <strong>9</strong>
-            <span>городов</span>
+            <strong>200+</strong>
+            <span>агентов</span>
             <span>рядом</span>
           </div>
         </div>
@@ -66,6 +107,16 @@
             <span class="map-kicker">Запорожская область</span>
             <h3>Агенты работают<br>по всей Запорожской области</h3>
             <p>Все 9 городов связаны с отдельными страницами. Выберите ближайший к вам.</p>
+            <br>
+            <div class="additional-city-search map-city-search" data-city-search>
+              <div class="additional-city-search-control">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+                <input id="map-city-search-input" type="search" placeholder="Поиск города" aria-label="Поиск города или населённого пункта" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="map-city-search-suggestions" aria-expanded="false">
+                <button class="additional-city-search-clear" type="button" aria-label="Очистить поиск" hidden>×</button>
+                <div class="additional-city-suggestions" id="map-city-search-suggestions" role="listbox" hidden></div>
+              </div>
+              <p class="additional-city-search-status" aria-live="polite"></p>
+            </div>
             <div class="map-legend"><span></span> Нажмите на город</div>
           </div>
 
@@ -83,19 +134,6 @@
               <a class="map-point label-right map-point-major" data-city="melitopol" style="--x:40.44%;--y:63.07%" href="melitopol/index.html" aria-label="Мелитополь, 14 агентов"></span><span class="map-label">Мелитополь</span><span class="map-dot" aria-hidden="true"></span></a>
               <a class="map-point label-left" data-city="primorsk" style="--x:68.34%;--y:68.52%" href="primorsk/index.html" aria-label="Приморск, 5 агентов"><span class="map-label">Приморск</span><span class="map-dot" aria-hidden="true"></span></a>
               <a class="map-point label-right map-point-major" data-city="berdyansk" style="--x:80.73%;--y:67.56%" href="berdyansk/index.html" aria-label="Бердянск, 13 агентов"><span class="map-label">Бердянск</span><span class="map-dot" aria-hidden="true"></span></a>
-
-              <a class="map-point map-point-secondary" data-extra-city="blagoveshchenka" style="--x:25.05%;--y:34.14%" href="#additional-blagoveshchenka" aria-label="Благовещенка, 2 агента"><span class="map-dot" aria-hidden="true"></span></a>
-              <a class="map-point map-point-secondary" data-extra-city="vodyanoe" style="--x:15.63%;--y:32.52%" href="#additional-vodyanoe" aria-label="Водяное, 1 агент"><span class="map-dot" aria-hidden="true"></span></a>
-              <a class="map-point map-point-secondary" data-extra-city="dneprorudnoe" style="--x:30.13%;--y:37.48%" href="#additional-dneprorudnoe" aria-label="Днепрорудное, 1 агент"><span class="map-dot" aria-hidden="true"></span></a>
-              <a class="map-point map-point-secondary" data-extra-city="zapovitnoe" style="--x:19.29%;--y:38.12%" href="#additional-zapovitnoe" aria-label="Заповитное, 1 агент"><span class="map-dot" aria-hidden="true"></span></a>
-              <a class="map-point map-point-secondary" data-extra-city="ivanovka" style="--x:26.60%;--y:34.20%" href="#additional-ivanovka" aria-label="Ивановка, 1 агент"><span class="map-dot" aria-hidden="true"></span></a>
-              <a class="map-point map-point-secondary" data-extra-city="kirillovka" style="--x:40.47%;--y:86.05%" href="#additional-kirillovka" aria-label="Кирилловка, 1 агент"><span class="map-dot" aria-hidden="true"></span></a>
-              <a class="map-point map-point-secondary" data-extra-city="malaya-belozerka" style="--x:27.84%;--y:43.98%" href="#additional-malaya-belozerka" aria-label="Малая Белозерка, 1 агент"><span class="map-dot" aria-hidden="true"></span></a>
-              <a class="map-point map-point-secondary" data-extra-city="mikhailovka" style="--x:36.19%;--y:42.92%" href="#additional-mikhailovka" aria-label="Михайловка, 1 агент"><span class="map-dot" aria-hidden="true"></span></a>
-              <a class="map-point map-point-secondary" data-extra-city="novovasilevka" style="--x:80.44%;--y:62.96%" href="#additional-novovasilevka" aria-label="Нововасильевка, 1 агент"><span class="map-dot" aria-hidden="true"></span></a>
-              <a class="map-point map-point-secondary" data-extra-city="novodneprovka" style="--x:23.30%;--y:36.38%" href="#additional-novodneprovka" aria-label="Новоднепровка, 1 агент"><span class="map-dot" aria-hidden="true"></span></a>
-              <a class="map-point map-point-secondary" data-extra-city="priazovskoe" style="--x:47.96%;--y:69.34%" href="#additional-priazovskoe" aria-label="Приазовское, 1 агент"><span class="map-dot" aria-hidden="true"></span></a>
-              <a class="map-point map-point-secondary" data-extra-city="rozovka" style="--x:88.59%;--y:37.01%" href="#additional-rozovka" aria-label="Розовка, 1 агент"><span class="map-dot" aria-hidden="true"></span></a>
             </div>
           </div>
         </div>
@@ -118,7 +156,7 @@
               <p class="eyebrow eyebrow-blue"><span></span> Другие точки обслуживания</p>
               <h3 id="additional-cities-title">Остальные населённые пункты</h3>
             </div>
-            <p>Выберите населённый пункт, чтобы посмотреть адрес страхового агента.</p>
+            <p>Сначала выберите район, затем населённый пункт, чтобы посмотреть адреса и телефоны страховых агентов.</p>
           </div>
 
           <div class="additional-city-list">
@@ -311,10 +349,10 @@
           <p>Федеральная страховая компания и местные специалисты, которые знают свой город.</p>
         </div>
         <div class="stats-grid">
-          <div class="stat"><strong>9</strong><span>городов</span><p>Присутствие по всей Запорожской области</p></div>
-          <div class="stat"><strong id="total-agents">54</strong><span id="total-agents-label">агента</span><p>Местные специалисты рядом с вами</p></div>
-          <div class="stat"><strong>с 1990</strong><span>на рынке</span><p>Один из старейших страховых брендов России</p></div>
-          <div class="stat"><strong>15 мин</strong><span>на оформление</span><p>Среднее время оформления полиса</p></div>
+          <div class="stat"><strong>В 40% случаев при&nbsp;ДТП</strong><span>Выплата страховки на месте</span><p>В неспорных случаях ДТП, наш комиссар выплачивает страховку сразу на месте — наличными, без экспертиз и очередей</p></div>
+          <div class="stat"><strong>Минимум жалоб</strong><span>по ренкингу договоров ОСАГО Банка России</span><p>среди крупных страховщиков Астро-Волга занимает первое место по минимальному количеству жалоб (0,17 на 10 000 полисов)</p></div>
+          <div class="stat"><strong>200+ агентов</strong><span>По Запорожской области</span><p>Работают практически во всех населённых пунктах области — оформляйте полис рядом с домом или работой</p></div>
+          <div class="stat"><strong>15 мин</strong><span>среднее время оформления ОСАГО</span><p>Опытный агент рассчитает стоимость и оформит полис примерно за 15 минут — в день обращения, в удобной для вас точке</p></div>
         </div>
       </div>
     </section>
@@ -413,6 +451,7 @@
     <a class="button button-primary" id="geo-city-link" href="#cities">Перейти</a>
   </aside>
 
-  <script src="script.js?v=20260824-2"></script>
+  <script src="agents-directory.js?v=20260831-5"></script>
+  <script src="script.js?v=20260831-5"></script>
 </body>
 </html>
