@@ -12,6 +12,97 @@
   const additions = window.ASTRO_AGENT_DATA?.existing?.[cityKey] || [];
   const agentsGrid = document.querySelector('#agents-list');
 
+  const renderCityBenefits = () => {
+    const mount = document.querySelector('[data-city-benefits]');
+    if (!mount) return;
+
+    mount.innerHTML = `
+      <section class="trust section" aria-labelledby="trust-title">
+        <div class="container trust-inner">
+          <div class="trust-copy">
+            <p class="eyebrow"><span></span> Честно. Просто. Быстро.</p>
+            <h2 id="trust-title">Почему выбирают нас</h2>
+            <p>Федеральная страховая компания и местные специалисты, которые знают свой город.</p>
+          </div>
+          <div class="stats-grid">
+            <div class="stat"><strong>В +40% случаев при&nbsp;ДТП</strong><span>Решение принимается на месте</span><p>В неспорных случаях, наш выездной комиссар урегулирует выплату страховки в день ДТП</p></div>
+            <div class="stat"><strong>Минимум жалоб</strong><span>по ренкингу договоров ОСАГО Банка России</span><p>среди крупных страховщиков Астро-Волга занимает первое место по минимальному количеству жалоб (0,17 на 10 000 полисов)</p></div>
+            <div class="stat"><strong>200+ агентов</strong><span>По Запорожской области</span><p>Работают практически во всех населённых пунктах области — оформляйте полис рядом с домом или работой</p></div>
+            <div class="stat"><strong>15 мин</strong><span>среднее время оформления ОСАГО</span><p>Опытный агент рассчитает стоимость и оформит полис примерно за 15 минут — в день обращения, в удобной для вас точке</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="why-us section" aria-labelledby="why-us-title">
+        <div class="container">
+          <div class="section-heading compact-heading why-us-heading">
+            <div>
+              <p class="eyebrow eyebrow-blue"><span></span> Награды и рейтинги</p>
+              <h2 id="why-us-title">Почему мы?</h2>
+            </div>
+            <p>Независимые рейтинги и профессиональные награды подтверждают надёжность и качество нашей работы.</p>
+          </div>
+
+          <div class="why-slider" data-why-slider>
+            <div class="why-slider-viewport" tabindex="0" aria-label="Награды и рейтинги Астро-Волги">
+              <div class="why-slider-track">
+                <article class="why-slide" role="group" aria-label="1 из 7">
+                  <div class="why-slide-logo"><img src="../assets/images/why-bank-russia.png" alt="Банк России" width="300" height="74"></div>
+                  <p>Первое место в рейтинге по степени лояльности к клиентам.</p>
+                </article>
+                <article class="why-slide" role="group" aria-label="2 из 7">
+                  <div class="why-slide-logo"><img src="../assets/images/why-finombudsman.png" alt="Финансовый уполномоченный" width="338" height="74"></div>
+                  <p>Первое место в рейтинге за минимальную долю жалоб по ОСАГО.</p>
+                </article>
+                <article class="why-slide" role="group" aria-label="3 из 7">
+                  <div class="why-slide-logo"><img src="../assets/images/why-sberbank.png" alt="Сбербанк" width="295" height="74"></div>
+                  <p>Наши полисы принимают все банки России.</p>
+                </article>
+                <article class="why-slide" role="group" aria-label="4 из 7">
+                  <div class="why-slide-logo"><img src="../assets/images/why-akra.png" alt="АКРА" width="184" height="74"></div>
+                  <p>Кредитный рейтинг A+(RU), прогноз «Стабильный».</p>
+                </article>
+                <article class="why-slide" role="group" aria-label="5 из 7">
+                  <div class="why-slide-logo"><img src="../assets/images/why-asn.png" alt="Агентство страховых новостей" width="300" height="58"></div>
+                  <p>ТОП-10. Народный топ. Рейтинг страховых компаний.</p>
+                </article>
+                <article class="why-slide" role="group" aria-label="6 из 7">
+                  <div class="why-slide-logo"><img src="../assets/images/why-social-project.png" alt="Лучший социальный проект России" width="87" height="74"></div>
+                  <p>Победитель конкурса «Лучший социальный проект России» 2024 года.</p>
+                </article>
+                <article class="why-slide" role="group" aria-label="7 из 7">
+                  <div class="why-slide-logo"><img src="../assets/images/why-consumers-choice.png" alt="Выбор потребителей" width="196" height="74"></div>
+                  <p>Номинация «Сервис года в страховании» премии «Выбор потребителей».</p>
+                </article>
+              </div>
+            </div>
+
+            <button class="why-slider-button why-slider-prev" type="button" aria-label="Предыдущий слайд" disabled>
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M19 12H5m5 5-5-5 5-5"/></svg>
+            </button>
+            <button class="why-slider-button why-slider-next" type="button" aria-label="Следующий слайд">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+            </button>
+
+            <div class="why-slider-meta">
+              <span class="why-slider-progress" aria-hidden="true"><span data-why-progress></span></span>
+              <div class="why-slider-dots" aria-label="Навигация по слайдам">
+                <button class="why-slider-dot is-active" type="button" aria-label="Перейти к слайду 1" aria-current="true"></button>
+                <button class="why-slider-dot" type="button" aria-label="Перейти к слайду 2"></button>
+                <button class="why-slider-dot" type="button" aria-label="Перейти к слайду 3"></button>
+                <button class="why-slider-dot" type="button" aria-label="Перейти к слайду 4"></button>
+                <button class="why-slider-dot" type="button" aria-label="Перейти к слайду 5"></button>
+                <button class="why-slider-dot" type="button" aria-label="Перейти к слайду 6"></button>
+                <button class="why-slider-dot" type="button" aria-label="Перейти к слайду 7"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>`;
+  };
+
+  renderCityBenefits();
+
   const normalizeAddress = (value) => String(value || '')
     .toLocaleLowerCase('ru-RU')
     .replace(/ё/g, 'е')
@@ -189,8 +280,83 @@
 
   setupProductsMarquee();
 
+  const setupWhySlider = () => {
+    const slider = document.querySelector('[data-why-slider]');
+    if (!slider) return;
+
+    const viewport = slider.querySelector('.why-slider-viewport');
+    const track = slider.querySelector('.why-slider-track');
+    const slides = [...slider.querySelectorAll('.why-slide')];
+    const previousButton = slider.querySelector('.why-slider-prev');
+    const nextButton = slider.querySelector('.why-slider-next');
+    const progress = slider.querySelector('[data-why-progress]');
+    const dots = [...slider.querySelectorAll('.why-slider-dot')];
+    const reduceSliderMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let updateFrame;
+
+    const getStep = () => {
+      if (!slides.length) return 0;
+      const styles = window.getComputedStyle(track);
+      const gap = Number.parseFloat(styles.columnGap || styles.gap) || 0;
+      return slides[0].getBoundingClientRect().width + gap;
+    };
+
+    const updateSlider = () => {
+      const maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+      const step = getStep();
+      const activeIndex = Math.min(slides.length - 1, step ? Math.round(viewport.scrollLeft / step) : 0);
+      const scrollRatio = maxScroll ? Math.min(1, viewport.scrollLeft / maxScroll) : 0;
+
+      if (progress) progress.style.transform = `scaleX(${Math.max(1 / slides.length, scrollRatio)})`;
+      dots.forEach((dot, index) => {
+        const isActive = index === activeIndex;
+        dot.classList.toggle('is-active', isActive);
+        if (isActive) dot.setAttribute('aria-current', 'true');
+        else dot.removeAttribute('aria-current');
+      });
+      if (previousButton) previousButton.disabled = viewport.scrollLeft <= 2;
+      if (nextButton) nextButton.disabled = viewport.scrollLeft >= maxScroll - 2;
+    };
+
+    const queueUpdate = () => {
+      window.cancelAnimationFrame(updateFrame);
+      updateFrame = window.requestAnimationFrame(updateSlider);
+    };
+
+    const moveSlider = (direction) => {
+      viewport.scrollBy({
+        left: direction * getStep(),
+        behavior: reduceSliderMotion ? 'auto' : 'smooth'
+      });
+    };
+
+    previousButton?.addEventListener('click', () => moveSlider(-1));
+    nextButton?.addEventListener('click', () => moveSlider(1));
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        viewport.scrollTo({
+          left: index * getStep(),
+          behavior: reduceSliderMotion ? 'auto' : 'smooth'
+        });
+      });
+    });
+    viewport.addEventListener('scroll', queueUpdate, { passive: true });
+    viewport.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      event.preventDefault();
+      moveSlider(event.key === 'ArrowRight' ? 1 : -1);
+    });
+
+    if ('ResizeObserver' in window) new ResizeObserver(queueUpdate).observe(viewport);
+    else window.addEventListener('resize', queueUpdate);
+
+    updateSlider();
+  };
+
+  setupWhySlider();
+
   const revealItems = [
-    ...document.querySelectorAll('.agents-heading, .agents-toolbar, .agent-card, .city-services-heading, .city-services-card, .city-help-inner, .footer-top, .footer-details > *, .disclaimer, .footer-bottom')
+    ...document.querySelectorAll('.agents-heading, .agents-toolbar, .agent-card, .city-services-heading, .city-services-card, .trust-copy, .stat, .why-slider, .footer-top, .footer-details > *, .disclaimer, .footer-bottom')
   ];
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
