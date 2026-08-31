@@ -12,6 +12,14 @@
   const additions = window.ASTRO_AGENT_DATA?.existing?.[cityKey] || [];
   const agentsGrid = document.querySelector('#agents-list');
 
+  const agentLabel = (count) => {
+    if (!Number.isFinite(count)) return 'агенты рядом';
+    const mod100 = count % 100;
+    const mod10 = count % 10;
+    const word = mod100 >= 11 && mod100 <= 19 ? 'агентов' : mod10 === 1 ? 'агент' : mod10 >= 2 && mod10 <= 4 ? 'агента' : 'агентов';
+    return `${word}`;
+  };
+
   const renderCityBenefits = () => {
     const mount = document.querySelector('[data-city-benefits]');
     if (!mount) return;
@@ -201,7 +209,9 @@
     if (number) number.textContent = String(index + 1).padStart(2, '0');
   });
   const heroCount = document.querySelector('.city-count strong');
+  const heroCountText = document.querySelector('.city-count span');
   if (heroCount) heroCount.textContent = cards.length;
+  if (heroCountText) heroCountText.textContent = agentLabel(cards.length);
   const heroEyebrow = document.querySelector('.city-hero .eyebrow');
   if (heroEyebrow) heroEyebrow.innerHTML = `<span></span> ${pointLabel(cards.length)} в городе`;
   const metaDescription = document.querySelector('meta[name="description"]');
