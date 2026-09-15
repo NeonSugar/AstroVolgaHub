@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#edf5fb">
+  <title>Личный кабинет агента | Астро-Волга</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css?v=20260909-1">
+  <link rel="stylesheet" href="agent.css?v=20260909-8">
+</head>
+<body class="cabinet-page">
+  <header class="cabinet-header">
+    <div class="container cabinet-header-inner">
+      <a href="../index.html" aria-label="Астро-Волга — на главную">
+        <img class="brand-logo" src="../assets/logo.svg" alt="Страховая компания Астро-Волга" width="240" height="44">
+      </a>
+      <a class="cabinet-home-link" href="../index.html">Вернуться на сайт</a>
+    </div>
+  </header>
+
+  <main class="cabinet-main">
+    <section class="cabinet-login" data-login-view>
+      <div class="cabinet-login-card">
+        <p class="eyebrow eyebrow-blue"><span></span> Для страховых агентов</p>
+        <h1>Личный кабинет агента</h1>
+        <p>Войдите, чтобы увидеть заявки клиентов на обратный звонок.</p>
+        <form class="cabinet-form" data-login-form novalidate>
+          <label><span>Логин</span><input name="login" type="text" autocomplete="username" maxlength="120" required></label>
+          <label><span>Пароль</span><input name="password" type="password" autocomplete="current-password" maxlength="200" required></label>
+          <button class="button button-primary" type="submit">Войти</button>
+          <p class="cabinet-form-status" data-login-status role="status"></p>
+        </form>
+      </div>
+    </section>
+
+    <section class="cabinet-dashboard" data-dashboard hidden>
+      <aside class="cabinet-sidebar">
+        <a class="cabinet-sidebar-brand" href="../index.html" aria-label="Астро-Волга — на главную">
+          <span class="cabinet-sidebar-logo"><img src="../assets/астроволга.svg" alt="Страховая компания Астро-Волга" width="226" height="42"></span>
+          <span>Личный кабинет агента</span>
+        </a>
+        <nav class="cabinet-sidebar-nav" aria-label="Разделы заявок">
+          <button class="is-active" type="button" data-sidebar-filter="all"><span class="cabinet-nav-icon" aria-hidden="true">▦</span>Все заявки<b data-sidebar-count="all">0</b></button>
+          <button type="button" data-sidebar-filter="new"><span class="cabinet-nav-icon" aria-hidden="true">☎</span>Новые<b data-sidebar-count="new">0</b></button>
+          <button type="button" data-sidebar-filter="in_progress"><span class="cabinet-nav-icon" aria-hidden="true">◷</span>В работе<b data-sidebar-count="in_progress">0</b></button>
+          <button type="button" data-sidebar-filter="processed"><span class="cabinet-nav-icon" aria-hidden="true">✓</span>Обработанные<b data-sidebar-count="processed">0</b></button>
+          <button type="button" data-sidebar-filter="rejected"><span class="cabinet-nav-icon" aria-hidden="true">×</span>Отказ<b data-sidebar-count="rejected">0</b></button>
+        </nav>
+        <div class="cabinet-sidebar-bottom">
+          <a class="cabinet-open-site" href="../index.html">↗ Открыть сайт</a>
+          <div class="cabinet-profile">
+            <span class="cabinet-avatar" data-agent-initial>А</span>
+            <span class="cabinet-profile-copy"><strong data-agent-name>Агент</strong><small data-agent-city></small></span>
+            <button class="cabinet-profile-logout" type="button" data-logout aria-label="Выйти из кабинета">→</button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="cabinet-workspace">
+        <header class="cabinet-mobile-header">
+          <a href="../index.html" aria-label="Астро-Волга — на главную"><img src="../assets/logo.svg" alt="Астро-Волга" width="166" height="31"></a>
+          <button class="cabinet-mobile-logout" type="button" data-logout>Выйти</button>
+        </header>
+        <div class="cabinet-content">
+          <div class="cabinet-title-row">
+            <div>
+              <p class="eyebrow eyebrow-blue"><span></span> Астро-Волга · управление</p>
+              <h1>Заявки клиентов</h1>
+            </div>
+            <time class="cabinet-current-date" data-current-date></time>
+          </div>
+          <div class="cabinet-intro-row">
+            <p>Здесь появляются обращения клиентов, которые ждут вашего звонка.</p>
+            <span class="cabinet-auto-refresh"><i aria-hidden="true"></i> Обновляется автоматически</span>
+          </div>
+          <div class="cabinet-summary" aria-label="Сводка по заявкам">
+            <button type="button" data-summary-filter="new"><span>Новые</span><small>ожидают ответа</small><strong data-metric="new">0</strong></button>
+            <button type="button" data-summary-filter="in_progress"><span>В работе</span><small>требуют внимания</small><strong data-metric="in_progress">0</strong></button>
+            <button type="button" data-summary-filter="processed"><span>Обработанные</span><small>завершённые заявки</small><strong data-metric="processed">0</strong></button>
+            <button type="button" data-summary-filter="rejected"><span>Отказы</span><small>отклонённые заявки</small><strong data-metric="rejected">0</strong></button>
+          </div>
+          <div class="cabinet-controls">
+            <div class="cabinet-filters" role="group" aria-label="Фильтр заявок">
+              <button class="is-active" type="button" data-filter="all">Все</button>
+              <button type="button" data-filter="new">Новые</button>
+              <button type="button" data-filter="in_progress">В работе</button>
+              <button type="button" data-filter="processed">Обработанные</button>
+              <button type="button" data-filter="rejected">Отказ</button>
+            </div>
+            <label class="cabinet-search">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4"></path></svg>
+              <input type="search" placeholder="Поиск по имени или телефону" aria-label="Поиск по имени или телефону" data-request-search>
+            </label>
+          </div>
+          <p class="cabinet-dashboard-status" data-dashboard-status role="status"></p>
+          <div class="cabinet-request-table">
+            <div class="cabinet-table-head" aria-hidden="true"><span>Клиент</span><span>Статус</span><span>Комментарий</span><span>Дата</span></div>
+            <div class="cabinet-request-list" data-request-list></div>
+          </div>
+          <div class="cabinet-empty" data-empty hidden>
+            <span>☎</span><strong>Заявок пока нет</strong><p>Новые обращения появятся здесь автоматически.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="cabinet-status-modal" data-status-modal hidden>
+    <button class="cabinet-status-backdrop" type="button" data-status-cancel aria-label="Закрыть окно"></button>
+    <form class="cabinet-status-dialog" data-status-form role="dialog" aria-modal="true" aria-labelledby="cabinet-status-title">
+      <button class="cabinet-status-close" type="button" data-status-cancel aria-label="Закрыть">×</button>
+      <p class="eyebrow eyebrow-blue"><span></span> Изменение заявки</p>
+      <h2 id="cabinet-status-title" data-status-title>Уточните детали</h2>
+      <p class="cabinet-status-description" data-status-description></p>
+
+      <fieldset class="cabinet-status-picker">
+        <legend>Новый статус</legend>
+        <label><input type="radio" name="nextStatus" value="new" required><span>Новая</span></label>
+        <label><input type="radio" name="nextStatus" value="in_progress"><span>В работе</span></label>
+        <label><input type="radio" name="nextStatus" value="processed"><span>Обработанные</span></label>
+        <label><input type="radio" name="nextStatus" value="rejected"><span>Отказ</span></label>
+      </fieldset>
+
+      <fieldset class="cabinet-status-fields" data-status-fields="in_progress" hidden>
+        <legend>Причина</legend>
+        <label><input type="radio" name="workReason" value="rescheduled"><span>Перенесено</span></label>
+        <label><input type="radio" name="workReason" value="no_answer"><span>Недозвон</span></label>
+        <label class="cabinet-status-date" data-follow-up-date hidden><span>Дата переноса <small>(необязательно)</small></span><input type="date" name="followUpDate"></label>
+      </fieldset>
+
+      <fieldset class="cabinet-status-fields" data-status-fields="processed" hidden>
+        <legend>Оказанные услуги</legend>
+        <label><input type="checkbox" name="services" value="osago"><span>ОСАГО</span></label>
+        <label><input type="checkbox" name="services" value="kasko"><span>КАСКО</span></label>
+        <label><input type="checkbox" name="services" value="health"><span>Здоровье</span></label>
+        <label><input type="checkbox" name="services" value="property"><span>Имущество</span></label>
+        <label><input type="checkbox" name="services" value="other"><span>Другое</span></label>
+      </fieldset>
+
+      <label class="cabinet-status-comment" data-status-fields="rejected" hidden>
+        <span>Причина отказа</span>
+        <textarea name="rejectionComment" rows="4" maxlength="1000" placeholder="Добавьте комментарий" required></textarea>
+      </label>
+
+      <div class="cabinet-status-actions">
+        <button class="button button-secondary" type="button" data-status-cancel>Отмена</button>
+        <button class="button button-primary" type="submit">Сохранить</button>
+      </div>
+      <p class="cabinet-form-status" data-status-error role="status"></p>
+    </form>
+  </div>
+
+  <script src="agent.js?v=20260909-9"></script>
+</body>
+</html>

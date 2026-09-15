@@ -13,7 +13,7 @@
 .city-call-link{color:var(--blue);font-weight:700;border-bottom:1px solid rgba(0,103,177,.28)}
 
 .city-hero-visual{aspect-ratio:1;position:relative;border-radius:50%;isolation:isolate; filter: drop-shadow(1px 2px 5px #999);scale:.92} 
-.city-hero-visual::before{content:"";position:absolute;height:130%; aspect-ratio: 1; inset: -15%; background-image:var(--city-hero-image,url('../assets/images/cities/berdyansk.png'));background-repeat:no-repeat;background-position:center;background-size:contain;z-index:-1}
+.city-hero-visual::before{content:"";position:absolute;height:130%; aspect-ratio: 1; inset: -15%; background-image:var(--city-hero-image,url('../assets/images/cities/berdyansk.webp'));background-repeat:no-repeat;background-position:center;background-size:contain;z-index:-1}
 .city-hero-visual-generic::before{background-size:contain}
 .city-count{position:absolute;right:5%;top:0;z-index:4;width:124px;height:124px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-content:center;text-align:center;box-shadow:0 18px 36px rgba(125,14,31,.28)}
 .city-count strong{font-size:39px;line-height:1}.city-count span{margin-top:5px;font-size:11px;line-height:1.25;text-transform:uppercase;letter-spacing:.08em}
@@ -70,12 +70,30 @@
 .agent-map-link:hover:after{transform: translateX(100%); transition: 0.3s;}
 
 .agent-card:focus-within{border-color:var(--blue);box-shadow:0 0 0 4px rgba(0,103,177,.1),0 20px 40px rgba(30,71,104,.12)}
+.agent-callback-button{width:100%;min-height:44px;margin-top:auto;padding:0 16px;border:0;border-radius:12px;background:var(--red);color:#fff;font-weight:700;cursor:pointer;box-shadow:0 10px 22px rgba(198,23,48,.18);transition:background .2s,transform .2s,box-shadow .2s}
+.agent-callback-button:hover{background:var(--red-dark);transform:translateY(-1px);box-shadow:0 13px 25px rgba(198,23,48,.24)}
+.agent-callback-button+.agent-map-link{margin-top:14px}
+.callback-modal[hidden]{display:none}.callback-modal{position:fixed;inset:0;z-index:1400;display:grid;place-items:center;padding:20px;overflow-y:auto}
+.callback-modal-backdrop{position:fixed;inset:0;background:rgba(8,28,46,.72);backdrop-filter:blur(4px)}
+.callback-dialog{position:relative;z-index:1;width:min(100%,520px);padding:34px;border-radius:26px;background:#fff;box-shadow:0 28px 85px rgba(0,0,0,.34);animation:callback-dialog-in .22s ease both}
+.callback-close{position:absolute;right:18px;top:18px;width:40px;height:40px;border:0;border-radius:50%;background:var(--sky);color:var(--blue);font-size:27px;line-height:1;cursor:pointer}
+.callback-dialog h2{margin:0;font-size:clamp(30px,5vw,43px);line-height:1.08;letter-spacing:-.035em}
+.callback-agent{margin:13px 44px 24px 0;color:var(--muted);font-size:14px}
+.callback-form{display:grid;gap:17px}.callback-form>label:not(.callback-consent){display:grid;gap:7px;color:#536477;font-size:13px;font-weight:600}
+.callback-form input[type="text"],.callback-form input[type="tel"]{height:54px;width:100%;padding:0 16px;border:1px solid var(--line);border-radius:14px;background:#f8fbfd;color:var(--ink);font:inherit;outline:none;transition:border-color .2s,box-shadow .2s,background .2s}
+.callback-form input[type="text"]:focus,.callback-form input[type="tel"]:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 4px rgba(0,103,177,.1)}
+.callback-consent{display:grid;grid-template-columns:20px 1fr;align-items:start;gap:10px;color:#67788a;font-size:12px;line-height:1.5}.callback-consent input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--blue)}.callback-consent a{color:var(--blue);text-decoration:underline}
+.callback-form .button{width:100%}.callback-form .button:disabled{opacity:.65;cursor:wait;transform:none}
+.callback-status{min-height:1.5em;margin:0;color:var(--red);font-size:13px}.callback-status.is-success{color:#1c7a4b}
+body.callback-modal-open{overflow:hidden}
+@keyframes callback-dialog-in{from{opacity:0;translate:0 14px;scale:.98}to{opacity:1;translate:0 0;scale:1}}
 
 @media(hover:hover) and (pointer:fine){
   .agent-card:hover{transform:translateY(-5px);border-color:var(--blue);background:var(--blue);color:#fff;box-shadow:0 22px 42px rgba(0,74,128,.24)}
   .agent-card:hover .agent-number,.agent-card:hover .agent-note{color:rgba(255,255,255,.7)}
   .agent-card:hover .agent-phone{color:#fff}
   .agent-card:hover .agent-map-link{color:#fff;border-color:rgba(255,255,255,.28)}
+  .agent-card:hover .agent-callback-button{background:#fff;color:var(--red);box-shadow:none}
   .agent-card:hover.agent-card-offsite .agent-phones{border-color:rgba(255,255,255,.28)}
   .agent-map-link:hover svg{background: #fff; border-radius: 4px; color: var(--red);}
 }
@@ -133,6 +151,7 @@ html.city-reveal-ready .city-reveal.is-revealed{animation:city-reveal .72s cubic
   .agents-toolbar{align-items:stretch;flex-direction:column;gap:10px}.agents-result{padding-left:4px}
   .agents-grid{grid-template-columns:1fr;gap:12px}
   .agent-card{min-height:218px;padding:22px}.agent-card h3{margin-top:20px}
+  .callback-modal{padding:14px}.callback-dialog{padding:28px 20px;border-radius:22px}.callback-close{right:14px;top:14px}.callback-agent{margin-right:38px}
   .city-services-heading{grid-template-columns:1fr;gap:12px;margin-bottom:28px}.city-services-heading h2{font-size:34px}.city-services-heading>p:last-child{font-size:14px}
   .city-services-grid{grid-template-columns:1fr;gap:12px}
   .city-services-card{padding:24px;border-radius:20px}.city-services-card h3{font-size:21px;margin-bottom:20px}.city-services-card ul{font-size:13px;gap:11px}

@@ -48,7 +48,7 @@ a.header-social-link:hover{color:#fff;background:var(--blue);border-color:var(--
 .button-primary:hover{background:var(--red-dark);transform:translateY(-2px);box-shadow:0 17px 30px rgba(198,23,48,.26)}
 .hero-note{font-size:13px;color:#738295;margin:18px 0 0 4px}
 .hero-visual{aspect-ratio:1;position:relative;border-radius:50%;box-shadow:0 38px 70px rgba(0,70,120,.25);isolation:isolate}
-.hero-visual::before{content:"";position:absolute;background:url(assets/images/hub-main.png);background-size: contain; background-repeat: no-repeat; width: 130%; height: 130%; inset: 0 -15%; z-index:2}
+.hero-visual::before{content:"";position:absolute;background:url(assets/images/hub-main.webp);background-size: contain; background-repeat: no-repeat; width: 130%; height: 130%; inset: 0 -15%; z-index:2}
 .orbit{position:absolute;border:1px solid rgba(255,255,255,.27);border-radius:50%;inset:18%;transform:rotate(17deg)}
 .orbit-two{inset:34% 4%;transform:rotate(-37deg)}
 .hero-badge{position:absolute;z-index:4;left:-4%;width:126px;height:126px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction: column;gap:2px;box-shadow:var(--shadow)}

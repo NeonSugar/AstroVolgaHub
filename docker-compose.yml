@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: astro_volga
+      POSTGRES_USER: astro_volga
+      POSTGRES_PASSWORD: change_me
+    ports:
+      - "5432:5432"
+    volumes:
+      - astro_volga_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U astro_volga -d astro_volga"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  app:
+    build: .
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 4174
+      DATABASE_URL: postgres://astro_volga:change_me@postgres:5432/astro_volga
+      SESSION_SECRET: change_me
+      DB_SSL: "false"
+      COOKIE_SECURE: "false"
+    ports:
+      - "4174:4174"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  astro_volga_pgdata:

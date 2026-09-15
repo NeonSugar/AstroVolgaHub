@@ -55,31 +55,31 @@
             <div class="why-slider-viewport" tabindex="0" aria-label="Награды и рейтинги Астро-Волги">
               <div class="why-slider-track">
                 <article class="why-slide" role="group" aria-label="1 из 7">
-                  <div class="why-slide-logo"><img src="../assets/images/why-bank-russia.png" alt="Банк России" width="300" height="74"></div>
+                  <div class="why-slide-logo"><img src="../assets/images/why-bank-russia.webp" alt="Банк России" width="300" height="74"></div>
                   <p>Первое место в рейтинге по степени лояльности к клиентам.</p>
                 </article>
                 <article class="why-slide" role="group" aria-label="2 из 7">
-                  <div class="why-slide-logo"><img src="../assets/images/why-finombudsman.png" alt="Финансовый уполномоченный" width="338" height="74"></div>
+                  <div class="why-slide-logo"><img src="../assets/images/why-finombudsman.webp" alt="Финансовый уполномоченный" width="338" height="74"></div>
                   <p>Первое место в рейтинге за минимальную долю жалоб по ОСАГО.</p>
                 </article>
                 <article class="why-slide" role="group" aria-label="3 из 7">
-                  <div class="why-slide-logo"><img src="../assets/images/why-sberbank.png" alt="Сбербанк" width="295" height="74"></div>
+                  <div class="why-slide-logo"><img src="../assets/images/why-sberbank.webp" alt="Сбербанк" width="295" height="74"></div>
                   <p>Наши полисы принимают все банки России.</p>
                 </article>
                 <article class="why-slide" role="group" aria-label="4 из 7">
-                  <div class="why-slide-logo"><img src="../assets/images/why-akra.png" alt="АКРА" width="184" height="74"></div>
+                  <div class="why-slide-logo"><img src="../assets/images/why-akra.webp" alt="АКРА" width="184" height="74"></div>
                   <p>Кредитный рейтинг A+(RU), прогноз «Стабильный».</p>
                 </article>
                 <article class="why-slide" role="group" aria-label="5 из 7">
-                  <div class="why-slide-logo"><img src="../assets/images/why-asn.png" alt="Агентство страховых новостей" width="300" height="58"></div>
+                  <div class="why-slide-logo"><img src="../assets/images/why-asn.webp" alt="Агентство страховых новостей" width="300" height="58"></div>
                   <p>ТОП-10. Народный топ. Рейтинг страховых компаний.</p>
                 </article>
                 <article class="why-slide" role="group" aria-label="6 из 7">
-                  <div class="why-slide-logo"><img src="../assets/images/why-social-project.png" alt="Лучший социальный проект России" width="87" height="74"></div>
+                  <div class="why-slide-logo"><img src="../assets/images/why-social-project.webp" alt="Лучший социальный проект России" width="87" height="74"></div>
                   <p>Победитель конкурса «Лучший социальный проект России» 2024 года.</p>
                 </article>
                 <article class="why-slide" role="group" aria-label="7 из 7">
-                  <div class="why-slide-logo"><img src="../assets/images/why-consumers-choice.png" alt="Выбор потребителей" width="196" height="74"></div>
+                  <div class="why-slide-logo"><img src="../assets/images/why-consumers-choice.webp" alt="Выбор потребителей" width="196" height="74"></div>
                   <p>Номинация «Сервис года в страховании» премии «Выбор потребителей».</p>
                 </article>
               </div>
@@ -239,6 +239,138 @@
   };
 
   search?.addEventListener('input', filterAgents);
+
+  const setupCallbackRequests = async () => {
+    let publicAgents;
+    try {
+      const response = await fetch(`/api/public/agents?city=${encodeURIComponent(cityKey)}`, {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' }
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      publicAgents = Array.isArray(data.agents) ? data.agents : [];
+    } catch (_error) {
+      return;
+    }
+    if (!publicAgents.length) return;
+
+    const modal = document.createElement('div');
+    modal.className = 'callback-modal';
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="callback-modal-backdrop" data-callback-close></div>
+      <div class="callback-dialog" role="dialog" aria-modal="true" aria-labelledby="callback-title">
+        <button class="callback-close" type="button" aria-label="Закрыть форму" data-callback-close>×</button>
+        <p class="eyebrow eyebrow-blue"><span></span> Связаться с агентом</p>
+        <h2 id="callback-title">Оставить заявку</h2>
+        <p class="callback-agent" data-callback-agent></p>
+        <form class="callback-form" data-callback-form novalidate>
+          <label><span>Ваше имя</span><input name="name" type="text" autocomplete="name" minlength="2" maxlength="80" required></label>
+          <label><span>Номер телефона</span><input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+7 900 000-00-00" maxlength="24" required></label>
+          <label class="callback-consent"><input name="consent" type="checkbox" required><span>Я соглашаюсь на обработку персональных данных согласно <a href="https://astrovolga.ru/upload/medialibrary/86b/bzomnwfohjp5w7qe4ob6o2xubyf0gc7t.pdf" target="_blank" rel="noopener">политике конфиденциальности</a>.</span></label>
+          <button class="button button-primary" type="submit">Отправить заявку</button>
+          <p class="callback-status" data-callback-status role="status"></p>
+        </form>
+      </div>`;
+    document.body.append(modal);
+
+    const form = modal.querySelector('[data-callback-form]');
+    const status = modal.querySelector('[data-callback-status]');
+    const agentLabelElement = modal.querySelector('[data-callback-agent]');
+    const submitButton = form.querySelector('button[type="submit"]');
+    let selectedAgent = null;
+    let previouslyFocused = null;
+
+    const closeModal = () => {
+      modal.hidden = true;
+      document.body.classList.remove('callback-modal-open');
+      selectedAgent = null;
+      form.reset();
+      status.textContent = '';
+      submitButton.disabled = false;
+      previouslyFocused?.focus();
+    };
+
+    const openModal = (agent, trigger) => {
+      selectedAgent = agent;
+      previouslyFocused = trigger;
+      agentLabelElement.textContent = `${agent.displayName} · ${agent.address}`;
+      modal.hidden = false;
+      document.body.classList.add('callback-modal-open');
+      window.requestAnimationFrame(() => form.elements.name.focus());
+    };
+
+    modal.querySelectorAll('[data-callback-close]').forEach((button) => button.addEventListener('click', closeModal));
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !modal.hidden) closeModal();
+    });
+
+    cards.forEach((card) => {
+      const addressKey = normalizeAddress(card.querySelector('h3')?.textContent);
+      const phoneNumbers = [...card.querySelectorAll('[href^="tel:"]')]
+        .map((link) => link.href.replace(/\D/g, ''));
+      const agent = publicAgents.find((item) => item.addressKey === addressKey && phoneNumbers.includes(item.phone));
+      if (!agent) return;
+      const button = document.createElement('button');
+      button.className = 'agent-callback-button';
+      button.type = 'button';
+      button.textContent = 'Оставить заявку';
+      button.addEventListener('click', () => openModal(agent, button));
+      const mapLink = card.querySelector('.agent-map-link');
+      if (mapLink) mapLink.before(button);
+      else card.append(button);
+    });
+
+    const getCsrfToken = async () => {
+      const response = await fetch('/api/csrf', { credentials: 'same-origin' });
+      if (!response.ok) throw new Error('Не удалось подготовить форму.');
+      return (await response.json()).token;
+    };
+
+    const sendRequest = async (payload, csrfToken) => fetch('/api/callback-requests', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify(payload)
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!selectedAgent || !form.reportValidity()) return;
+      submitButton.disabled = true;
+      status.classList.remove('is-success');
+      status.textContent = 'Отправляем заявку…';
+      const formData = new FormData(form);
+      const payload = {
+        agentId: selectedAgent.id,
+        name: formData.get('name'),
+        phone: formData.get('phone'),
+        consent: formData.get('consent') === 'on',
+        sourcePath: location.pathname
+      };
+
+      try {
+        let csrfToken = await getCsrfToken();
+        let response = await sendRequest(payload, csrfToken);
+        if (response.status === 403) {
+          csrfToken = await getCsrfToken();
+          response = await sendRequest(payload, csrfToken);
+        }
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Не удалось отправить заявку.');
+        form.reset();
+        status.classList.add('is-success');
+        status.textContent = 'Заявка отправлена. Агент свяжется с вами.';
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+  };
+
+  setupCallbackRequests();
 
   const setupProductsMarquee = () => {
     const marquee = document.querySelector('.city-products-marquee');
