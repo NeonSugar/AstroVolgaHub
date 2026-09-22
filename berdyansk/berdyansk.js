@@ -1,8 +1,34 @@
 (() => {
   'use strict';
 
-  const pathParts = location.pathname.split('/').filter(Boolean);
-  const cityKey = pathParts.at(-1) === 'index.html' ? pathParts.at(-2) : pathParts.at(-1) || 'berdyansk';
+  const cityKeys = new Set([
+    'berdyansk',
+    'energodar',
+    'kamenka',
+    'melitopol',
+    'primorsk',
+    'tokmak',
+    'vasilevka',
+    'veseloe',
+    'znamenka'
+  ]);
+
+  const hostnameCityKey = location.hostname
+    .split('.')[0]
+    .toLowerCase();
+
+  const pathParts = location.pathname
+    .split('/')
+    .filter(Boolean);
+
+  const pathCityKey = pathParts.at(-1) === 'index.html'
+    ? pathParts.at(-2)
+    : pathParts.at(-1);
+
+  const cityKey = cityKeys.has(hostnameCityKey)
+    ? hostnameCityKey
+    : pathCityKey || 'berdyansk';
+
   const cityNames = {
     berdyansk: 'Бердянск', energodar: 'Энергодар', kamenka: 'Каменка-Днепровская',
     melitopol: 'Мелитополь', primorsk: 'Приморск', tokmak: 'Токмак',
