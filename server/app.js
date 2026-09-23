@@ -100,13 +100,15 @@ export const createApp = ({ pool, config }) => {
       directives: {
         defaultSrc: ["'self'"],
         baseUri: ["'self'"],
-        connectSrc: ["'self'", 'https://mc.yandex.ru'],
+        childSrc: ["'self'", 'blob:', 'https://mc.yandex.ru'],
+        connectSrc: ["'self'", 'https://mc.yandex.ru', 'wss://mc.yandex.ru'],
         fontSrc: ["'self'", 'data:'],
         formAction: ["'self'"],
         frameAncestors: ["'none'"],
+        frameSrc: ["'self'", 'blob:', 'https://mc.yandex.ru'],
         imgSrc: ["'self'", 'data:', 'https://mc.yandex.ru'],
         objectSrc: ["'none'"],
-        scriptSrc: ["'self'", 'https://mc.yandex.ru'],
+        scriptSrc: ["'self'", 'https://mc.yandex.ru', 'https://yastatic.net'],
         styleSrc: ["'self'", "'unsafe-inline'"]
       }
     }
