@@ -349,6 +349,11 @@ export const createApp = ({ pool, config }) => {
   app.get(['/styles.css', '/script.js', '/agents-directory.js'], (request, response) => {
     response.sendFile(join(projectRoot, request.path.slice(1)));
   });
+
+  app.get('/yandex_5feb11370c3fa519.html', (_request, response) => {
+    response.sendFile(join(projectRoot, 'yandex_5feb11370c3fa519.html'));
+  });
+
   app.get(['/', '/index.html'], (_request, response) => response.sendFile(join(projectRoot, 'index.html')));
 
   app.use('/api', (_request, response) => response.status(404).json({ error: 'API method not found.' }));
