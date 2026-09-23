@@ -44,12 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (targetLink.id && targetLink.id.startsWith('map-')) {
       const city = targetLink.getAttribute('data-city') || targetLink.id.replace('map-', '');
-      sendGoal('map_city_click', { city });
+      sendGoal('map_city_click', { map_city: city });
     }
 
     if (targetLink.classList.contains('city-card')) {
       const city = targetLink.getAttribute('data-city') || 'unknown';
-      sendGoal('city_card_click', { city });
+      sendGoal('city_card_click', { city: city });
     }
 
     if (href.startsWith('tel:')) sendGoal('phone_click');
