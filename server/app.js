@@ -354,6 +354,10 @@ export const createApp = ({ pool, config }) => {
     response.sendFile(join(projectRoot, 'yandex_5feb11370c3fa519.html'));
   });
 
+  app.get('/preview.jpg', (_request, response) => {
+    response.sendFile(join(projectRoot, 'preview.jpg'));
+  });
+
   app.get(['/', '/index.html'], (_request, response) => response.sendFile(join(projectRoot, 'index.html')));
 
   app.use('/api', (_request, response) => response.status(404).json({ error: 'API method not found.' }));
