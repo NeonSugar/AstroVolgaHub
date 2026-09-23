@@ -100,13 +100,13 @@ export const createApp = ({ pool, config }) => {
       directives: {
         defaultSrc: ["'self'"],
         baseUri: ["'self'"],
-        connectSrc: ["'self'"],
+        connectSrc: ["'self'", 'https://mc.yandex.ru'],
         fontSrc: ["'self'", 'data:'],
         formAction: ["'self'"],
         frameAncestors: ["'none'"],
-        imgSrc: ["'self'", 'data:'],
+        imgSrc: ["'self'", 'data:', 'https://mc.yandex.ru'],
         objectSrc: ["'none'"],
-        scriptSrc: ["'self'"],
+        scriptSrc: ["'self'", 'https://mc.yandex.ru'],
         styleSrc: ["'self'", "'unsafe-inline'"]
       }
     }
@@ -346,7 +346,7 @@ export const createApp = ({ pool, config }) => {
     app.use(`/${city}`, express.static(join(projectRoot, city), { dotfiles: 'deny', maxAge: production ? '1h' : 0 }));
   });
   app.use('/agent', express.static(join(projectRoot, 'agent'), { dotfiles: 'deny', maxAge: production ? '1h' : 0 }));
-  app.get(['/styles.css', '/script.js', '/agents-directory.js'], (request, response) => {
+  app.get(['/styles.css', '/script.js', '/agents-directory.js', '/yandex-metrika.js'], (request, response) => {
     response.sendFile(join(projectRoot, request.path.slice(1)));
   });
 

@@ -28,91 +28,15 @@
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css?v=20260831-5">
-  
-    
-  <!-- Yandex.Metrika counter + Цели -->
-  <script type="text/javascript">
-      // 1. Основной код инициализации Яндекс Метрики
-      (function(m,e,t,r,i,k,a){
-          m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-          m[i].l=1*new Date();
-          for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-          k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-      })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=112953289', 'ym');
-
-      ym(112953289, 'init', {
-          ssr: true, 
-          webvisor: true, 
-          clickmap: true, 
-          ecommerce: "dataLayer", 
-          referrer: document.referrer, 
-          url: location.href, 
-          accurateTrackBounce: true, 
-          trackLinks: true
-      });
-
-      // 2. Скрипт отслеживания конкретных целей (клики, формы)
-      document.addEventListener('DOMContentLoaded', function() {
-          const counterId = 112953289;
-
-          function sendGoal(goalName, params) {
-              if (typeof ym === 'function') {
-                  ym(counterId, 'reachGoal', goalName, params || {});
-              }
-          }
-
-          // Отслеживание кликов по ссылкам и элементам
-          document.addEventListener('click', function(e) {
-              const targetLink = e.target.closest('a');
-              if (!targetLink) return;
-
-              const href = targetLink.href || '';
-
-              // 1. Переход в Telegram
-              if (href.includes('t.me/astro_volga_zo')) {
-                  sendGoal('telegram_click');
-              }
-
-              // 2. Переход в MAX
-              if (href.includes('max.ru/channel_astrovolga_zo')) {
-                  sendGoal('max_click');
-              }
-
-              // 3. Клики по ссылкам на карте (id="map-*")
-              if (targetLink.id && targetLink.id.startsWith('map-')) {
-                  const city = targetLink.getAttribute('data-city') || targetLink.id.replace('map-', '');
-                  sendGoal('map_city_click', { city: city });
-              }
-
-              // 4. Клики по карточкам городов (class="city-card")
-              if (targetLink.classList.contains('city-card')) {
-                  const city = targetLink.getAttribute('data-city') || 'unknown';
-                  sendGoal('city_card_click', { city: city });
-              }
-
-              // 5. Клики по всем номерам телефонов (href начинается с "tel:")
-              if (href.startsWith('tel:')) {
-                  sendGoal('phone_click');
-              }
-          });
-
-          // 6. Отправка любых форм на странице
-          document.addEventListener('submit', function(e) {
-              if (e.target.tagName.toLowerCase() === 'form') {
-                  sendGoal('form_submit');
-              }
-          });
-      });
-  </script>
-  <noscript>
-      <div>
-          <img src="https://mc.yandex.ru/watch/112953289" style="position:absolute; left:-9999px;" alt="" />
-      </div>
-  </noscript>
-  <!-- /Yandex.Metrika counter -->
+  <script src="yandex-metrika.js" defer></script>
 
 </head>
 <body>
+  <noscript>
+    <div>
+      <img src="https://mc.yandex.ru/watch/112953289" style="position:absolute; left:-9999px;" alt="">
+    </div>
+  </noscript>
   <a class="skip-link" href="#cities">Перейти к выбору города</a>
 
   <header class="site-header">
