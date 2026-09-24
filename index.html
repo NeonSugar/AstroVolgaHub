@@ -245,88 +245,103 @@
       </div>
     </section>
 
-    <section class="services section" aria-labelledby="services-title">
+    <section id="service-list" class="services section" aria-labelledby="services-title">
       <div class="container">
         <div class="section-heading compact-heading-h">
           <div><p class="eyebrow eyebrow-blue"><span></span> Защита самого важного</p><h2 id="services-title">Наши услуги</h2></div>
           <p>Основные страховые продукты доступны у агентов в вашем городе.</p>
         </div>
         <div class="service-grid">
-          <article class="service-card" data-service-card data-service-name="ОСАГО" role="button" tabindex="0" aria-pressed="false" aria-label="Показать подробности об ОСАГО">
-            <div class="service-card-inner">
-              <div class="service-card-face service-card-front">
-                <div class="service-image"><img src="assets/images/car-big.webp" alt="Автомобиль — ОСАГО" width="155" height="122"></div>
-                <span class="service-number">01</span><h3>ОСАГО</h3><p>Обязательное страхование авто. Оформление за 5 минут.</p>
-                <span class="service-card-more" aria-hidden="true">Подробнее <svg viewBox="0 0 24 24"><path d="M7 7h10v10M7 17 17 7"/></svg></span>
+          <div class="service-card-container">
+            <article class="service-card" data-service-card data-service-name="ОСАГО" role="button" tabindex="0" aria-pressed="false" aria-label="Показать подробности об ОСАГО">
+              <div class="service-card-inner">
+                <div class="service-card-face service-card-front">
+                  <div class="service-image"><img src="assets/images/car-big.webp" alt="Автомобиль — ОСАГО" width="155" height="122"></div>
+                  <span class="service-number">01</span><h3>ОСАГО</h3><p>Обязательное страхование авто. Оформление за 5 минут.</p>
+                  <span class="service-card-more" aria-hidden="true">Подробнее <svg viewBox="0 0 24 24"><path d="M7 7h10v10M7 17 17 7"/></svg></span>
+                </div>
+                <div class="service-card-face service-card-back" aria-hidden="true">
+                  <span class="service-back-kicker">01 · ОСАГО</span><h3>Подробнее об ОСАГО</h3>
+                  <p>Обязательная страховка авто. Защита от финансовых последствий ДТП и возмещение ущерба третьим лицам.</p>
+                  <br>
+                  <p>Полис защищает ответственность водителя перед другими участниками дорожного движения.</p>
+                  <span class="service-card-return">Нажмите, чтобы вернуться</span>
+                </div>
               </div>
-              <div class="service-card-face service-card-back" aria-hidden="true">
-                <span class="service-back-kicker">01 · ОСАГО</span><h3>Подробнее об ОСАГО</h3>
-                <p>Обязательная страховка авто. Защита от финансовых последствий ДТП и возмещение ущерба третьим лицам.</p>
-                <br>
-                <p>Полис защищает ответственность водителя перед другими участниками дорожного движения.</p>
-                <span class="service-card-return">Нажмите, чтобы вернуться</span>
+            
+            </article>
+            <button class="button button-blue button-search-city search-toggle" type="button" aria-controls="header-search-overlay" aria-expanded="false">
+              Для расчета и оформления выберите ближайшего агента
+            </button>
+          </div>
+          <div class="service-card-container">
+            <article class="service-card" data-service-card data-service-name="КАСКО" role="button" tabindex="0" aria-pressed="false" aria-label="Показать подробности о КАСКО">
+              <div class="service-card-inner">
+                <div class="service-card-face service-card-front">
+                  <div class="service-image service-image-blue-h"><img src="assets/images/car-hat-big.webp" alt="Автомобиль — КАСКО" width="155" height="122"></div>
+                  <span class="service-number">02</span><h3>КАСКО</h3><p>Защита вашего автомобиля от ущерба и угона.</p>
+                  <span class="service-card-more" aria-hidden="true">Подробнее <svg viewBox="0 0 24 24"><path d="M7 7h10v10M7 17 17 7"/></svg></span>
+                </div>
+                <div class="service-card-face service-card-back" aria-hidden="true">
+                  <span class="service-back-kicker">02 · КАСКО</span>
+                  <h3>Подробнее о КАСКО</h3>
+                  <p>Программы КАСКО покрывают ущерб при ДТП, угоне и другие риски.</p>
+                  <br>
+                  <h3>Мини-КАСКО</h3>
+                  <p>Программы страхования:</p>
+                  <ul>
+                    <li>«АвтоГарант» — устраняет недостатки ОСАГО</li>
+                    <li>«АвтоЗащита» — когда ОСАГО недостаточно</li>
+                  </ul>
+                  <span class="service-card-return">Нажмите, чтобы вернуться</span>
+                </div>
               </div>
-            </div>
-          </article>
-          <article class="service-card" data-service-card data-service-name="КАСКО" role="button" tabindex="0" aria-pressed="false" aria-label="Показать подробности о КАСКО">
-            <div class="service-card-inner">
-              <div class="service-card-face service-card-front">
-                <div class="service-image service-image-blue-h"><img src="assets/images/car-hat-big.webp" alt="Автомобиль — КАСКО" width="155" height="122"></div>
-                <span class="service-number">02</span><h3>КАСКО</h3><p>Защита вашего автомобиля от ущерба и угона.</p>
-                <span class="service-card-more" aria-hidden="true">Подробнее <svg viewBox="0 0 24 24"><path d="M7 7h10v10M7 17 17 7"/></svg></span>
+            </article>
+            <button class="button button-blue button-search-city search-toggle" type="button" aria-controls="header-search-overlay" aria-expanded="false">
+              Для расчета и оформления выберите ближайшего агента
+            </button>
+          </div>
+          <div class="service-card-container">
+            <article class="service-card" data-service-card data-service-name="Страхование имущества" role="button" tabindex="0" aria-pressed="false" aria-label="Показать подробности о страховании имущества">
+              <div class="service-card-inner">
+                <div class="service-card-face service-card-front">
+                  <div class="service-image service-image-sky-h"><img src="assets/images/house-hd.webp" alt="Домашнее имущество" width="1414" height="1113"></div>
+                  <span class="service-number">03</span><h3>Имущество</h3><p>Страхование дома, квартиры и дачи.</p>
+                  <span class="service-card-more" aria-hidden="true">Подробнее <svg viewBox="0 0 24 24"><path d="M7 7h10v10M7 17 17 7"/></svg></span>
+                </div>
+                <div class="service-card-face service-card-back" aria-hidden="true">
+                  <span class="service-back-kicker">03 · Имущество</span><h3>Защита вашего дома</h3>
+                  <p>Можно застраховать квартиру, дом, дачу, отделку и домашнее имущество.</p>
+                  <ul><li>Пожар, залив и стихийные явления</li><li>Повреждение отделки и техники</li><li>Набор рисков подбирается индивидуально</li></ul>
+                  <span class="service-card-return">Нажмите, чтобы вернуться</span>
+                </div>
               </div>
-              <div class="service-card-face service-card-back" aria-hidden="true">
-                <span class="service-back-kicker">02 · КАСКО</span>
-                <h3>Подробнее о КАСКО</h3>
-                <p>Программы КАСКО покрывают ущерб при ДТП, угоне и другие риски.</p>
-                <br>
-                <h3>Мини-КАСКО</h3>
-                <p>Программы страхования:</p>
-                <ul>
-                  <li>«АвтоГарант» — устраняет недостатки ОСАГО</li>
-                  <li>«АвтоЗащита» — когда ОСАГО недостаточно</li>
-                </ul>
-                <span class="service-card-return">Нажмите, чтобы вернуться</span>
+            </article>
+            <button class="button button-blue button-search-city search-toggle" type="button" aria-controls="header-search-overlay" aria-expanded="false">
+              Для расчета и оформления выберите ближайшего агента
+            </button>
+          </div>
+          <div class="service-card-container">
+            <article class="service-card service-card-accent" data-service-card data-service-name="Жизнь и здоровье" role="button" tabindex="0" aria-pressed="false" aria-label="Показать подробности о Жизнь и здоровье">
+              <div class="service-card-inner">
+                <div class="service-card-face service-card-front">
+                  <div class="service-image service-image-red-h"><img src="assets/images/health-hd.webp" alt="Страхование жизни и здоровья" width="1468" height="1071"></div>
+                  <span class="service-number">04</span><h3>Жизнь и здоровье</h3><p>Спортивное страхование, Несчастный случай, АнтиКЛЕЩ</p>
+                  <span class="service-card-more" aria-hidden="true">Подробнее <svg viewBox="0 0 24 24"><path d="M7 7h10v10M7 17 17 7"/></svg></span>
+                </div>
+                <div class="service-card-face service-card-back" aria-hidden="true">
+                  <span class="service-back-kicker">04 · Жизнь и здоровье</span><h3>Страхование жизни и здоровья</h3>
+                  <p>Это надежный щит, который защищает вас и ваших близких от финансовых трудностей в случае непредвиденных обстоятельств.</p>
+                  <br>
+                  <p>Это не просто полис; это мир, в котором вы можете быть уверены в завтрашнем дне.</p>
+                  <span class="service-card-return">Нажмите, чтобы вернуться</span>
+                </div>
               </div>
-            </div>
-          </article>
-          <article class="service-card" data-service-card data-service-name="Страхование имущества" role="button" tabindex="0" aria-pressed="false" aria-label="Показать подробности о страховании имущества">
-            <div class="service-card-inner">
-              <div class="service-card-face service-card-front">
-                <div class="service-image service-image-sky-h"><img src="assets/images/house-hd.webp" alt="Домашнее имущество" width="1414" height="1113"></div>
-                <span class="service-number">03</span><h3>Имущество</h3><p>Страхование дома, квартиры и дачи.</p>
-                <span class="service-card-more" aria-hidden="true">Подробнее <svg viewBox="0 0 24 24"><path d="M7 7h10v10M7 17 17 7"/></svg></span>
-              </div>
-              <div class="service-card-face service-card-back" aria-hidden="true">
-                <span class="service-back-kicker">03 · Имущество</span><h3>Защита вашего дома</h3>
-                <p>Можно застраховать квартиру, дом, дачу, отделку и домашнее имущество.</p>
-                <ul><li>Пожар, залив и стихийные явления</li><li>Повреждение отделки и техники</li><li>Набор рисков подбирается индивидуально</li></ul>
-                <span class="service-card-return">Нажмите, чтобы вернуться</span>
-              </div>
-            </div>
-          </article>
-          <article class="service-card service-card-accent" data-service-card data-service-name="Жизнь и здоровье" role="button" tabindex="0" aria-pressed="false" aria-label="Показать подробности о Жизнь и здоровье">
-            <div class="service-card-inner">
-              <div class="service-card-face service-card-front">
-                <div class="service-image service-image-red-h"><img src="assets/images/health-hd.webp" alt="Страхование жизни и здоровья" width="1468" height="1071"></div>
-                <span class="service-number">04</span><h3>Жизнь и здоровье</h3><p>Спортивное страхование, Несчастный случай, АнтиКЛЕЩ</p>
-                <span class="service-card-more" aria-hidden="true">Подробнее <svg viewBox="0 0 24 24"><path d="M7 7h10v10M7 17 17 7"/></svg></span>
-              </div>
-              <div class="service-card-face service-card-back" aria-hidden="true">
-                <span class="service-back-kicker">04 · Жизнь и здоровье</span><h3>Страхование жизни и здоровья</h3>
-                <p>Это надежный щит, который защищает вас и ваших близких от финансовых трудностей в случае непредвиденных обстоятельств.</p>
-                <br>
-                <p>Это не просто полис; это мир, в котором вы можете быть уверены в завтрашнем дне.</p>
-                <span class="service-card-return">Нажмите, чтобы вернуться</span>
-              </div>
-            </div>
-          </article>
-        </div>
-
-        <div id="search-button" class="fullwidth-container">
-          <button class="button button-blue button-search-city search-toggle" type="button" aria-controls="header-search-overlay" aria-expanded="false">
-            Для расчета и оформления выберите ближайшего агента <svg viewBox="0 0 24 24"><path d="M7 7h10v10M7 17 17 7"></path></svg>
-          </button>
+            </article>
+            <button class="button button-blue button-search-city search-toggle" type="button" aria-controls="header-search-overlay" aria-expanded="false">
+              Для расчета и оформления выберите ближайшего агента
+            </button>
+          </div>
         </div>
 
         <details id="services-list" class="services-accordion" open>
