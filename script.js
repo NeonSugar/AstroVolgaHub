@@ -300,7 +300,10 @@
   setupWhySlider();
 
   const setupServiceCards = () => {
-    document.querySelectorAll('[data-service-card]').forEach((card) => {
+    const cards = [...document.querySelectorAll('[data-service-card]')];
+    const setCardFlipped = new Map();
+
+    cards.forEach((card) => {
       const front = card.querySelector('.service-card-front');
       const back = card.querySelector('.service-card-back');
       const serviceName = card.dataset.serviceName;
@@ -314,14 +317,28 @@
         front?.setAttribute('aria-hidden', String(isFlipped));
         back?.setAttribute('aria-hidden', String(!isFlipped));
       };
+      setCardFlipped.set(card, setFlipped);
 
       const toggleCard = () => setFlipped(!card.classList.contains('is-flipped'));
 
       card.addEventListener('click', toggleCard);
+      card.addEventListener('focusout', (event) => {
+        if (!card.contains(event.relatedTarget)) setFlipped(false);
+      });
       card.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          setFlipped(false);
+          return;
+        }
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();
         toggleCard();
+      });
+    });
+
+    document.addEventListener('click', (event) => {
+      cards.forEach((card) => {
+        if (!card.contains(event.target)) setCardFlipped.get(card)?.(false);
       });
     });
   };
@@ -426,31 +443,40 @@
     const root = document.querySelector('[data-header-search]');
     if (!root) return;
 
-    const toggle = root.querySelector('.header-search-toggle');
+    const headerToggle = root.querySelector('.header-search-toggle');
+    const searchToggles = [...document.querySelectorAll('.search-toggle')];
     const overlay = root.querySelector('[data-header-search-overlay]');
     const dialog = root.querySelector('[data-header-search-dialog]');
     const closeButton = root.querySelector('.header-search-close');
     const input = root.querySelector('input');
     const mobileMedia = window.matchMedia('(max-width: 720px)');
-    if (!toggle || !overlay || !dialog || !closeButton || !input) return;
+    if (!headerToggle || !overlay || !dialog || !closeButton || !input) return;
+
+    const toggles = [headerToggle, ...searchToggles];
 
     let lastFocusedElement = null;
 
     const closeModal = ({ restoreFocus = true } = {}) => {
-      const wasOpen = overlay.classList.contains('is-open');
-      overlay.classList.remove('is-open');
-      toggle.setAttribute('aria-expanded', 'false');
+      const wasOpen = overlay.classList.contains('is-modal-open');
+      overlay.classList.remove('is-open', 'is-modal-open');
+      toggles.forEach((toggle) => toggle.setAttribute('aria-expanded', 'false'));
       document.body.classList.remove('city-search-modal-open');
-      if (mobileMedia.matches) overlay.setAttribute('aria-hidden', 'true');
-      if (wasOpen && restoreFocus) (lastFocusedElement || toggle).focus();
+      overlay.setAttribute('aria-hidden', mobileMedia.matches ? 'true' : 'false');
+      if (!mobileMedia.matches) {
+        dialog.removeAttribute('role');
+        dialog.removeAttribute('aria-modal');
+      }
+      if (wasOpen && restoreFocus) (lastFocusedElement || headerToggle).focus();
     };
 
-    const openModal = () => {
-      if (!mobileMedia.matches) return;
-      lastFocusedElement = document.activeElement;
-      overlay.classList.add('is-open');
+    const openModal = (invoker) => {
+      lastFocusedElement = invoker;
+      overlay.classList.add('is-open', 'is-modal-open');
       overlay.setAttribute('aria-hidden', 'false');
-      toggle.setAttribute('aria-expanded', 'true');
+      toggles.forEach((toggle) => toggle.setAttribute('aria-expanded', 'false'));
+      invoker.setAttribute('aria-expanded', 'true');
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
       document.body.classList.add('city-search-modal-open');
       window.requestAnimationFrame(() => input.focus());
     };
@@ -468,13 +494,13 @@
       }
     };
 
-    toggle.addEventListener('click', openModal);
+    toggles.forEach((toggle) => toggle.addEventListener('click', () => openModal(toggle)));
     closeButton.addEventListener('click', () => closeModal());
     overlay.addEventListener('click', (event) => {
       if (event.target === overlay) closeModal();
     });
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && overlay.classList.contains('is-open')) closeModal();
+      if (event.key === 'Escape' && overlay.classList.contains('is-modal-open')) closeModal();
     });
     window.addEventListener('hub:close-city-search', () => closeModal({ restoreFocus: false }));
     mobileMedia.addEventListener('change', syncMode);

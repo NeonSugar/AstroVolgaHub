@@ -117,6 +117,12 @@ a.header-social-link:hover{color:#fff;background:var(--blue);border-color:var(--
 .header-search-dialog-head{display:none}
 .header-city-search{max-width:none}
 .header-city-search input{height:48px;border-radius:14px;font-size:14px;box-shadow:0 5px 18px rgba(30,71,104,.05)}
+.header-search-overlay.is-modal-open{display:grid;position:fixed;inset:0;z-index:1200;padding:18px;background:rgba(8,28,46,.7);backdrop-filter:blur(3px);overflow-y:auto;align-items:start;justify-items:center}
+.header-search-overlay.is-modal-open .header-search-dialog{position:static;width:min(100%,520px);margin-top:max(24px,env(safe-area-inset-top));padding:18px;border-radius:22px;background:#fff;box-shadow:0 26px 70px rgba(0,0,0,.3);animation:header-search-in .22s ease both}
+.header-search-overlay.is-modal-open .header-search-dialog-head{margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.header-search-overlay.is-modal-open .header-search-dialog-head strong{font-size:20px}
+.header-search-overlay.is-modal-open .header-search-close{width:40px;height:40px;border-radius:50%;background:var(--sky);color:var(--blue);font-size:27px;line-height:1}
+.header-search-overlay.is-modal-open .header-city-search{margin:0}
 .header-city-search .additional-city-suggestions{z-index:30}
 .header-search-close{border:0;background:transparent;color:var(--ink);cursor:pointer}
 body.city-search-modal-open{overflow:hidden}
@@ -163,6 +169,11 @@ body.city-search-modal-open{overflow:hidden}
 .additional-agent-card p{margin:4px 0 0;color:#718196;font-size:12px}
 .additional-agent-phones{display:grid;justify-items:start;gap:4px;margin-top:auto;padding-top:18px}
 .additional-agent-phone{width:max-content;color:var(--blue);font-weight:700}
+
+.fullwidth-container { width: 100%; margin-top: 22px;}
+.button-search-city { width: 100%;}
+.button-blue{color:#fff;background:var(--blue);box-shadow:0 14px 26px rgba(23, 108, 198, 0.2)}
+.button-blue:hover{background:var(--blue-dark);transform:translateY(-2px);box-shadow:0 17px 30px rgba(23, 108, 198, 0.2)}
 
 .services{background:var(--sky)}
 .service-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
