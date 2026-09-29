@@ -9,7 +9,7 @@
   <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../styles.css?v=20260909-1">
   <link rel="stylesheet" href="../agent/agent.css?v=20260909-8">
-  <link rel="stylesheet" href="admin.css?v=20260929-2">
+  <link rel="stylesheet" href="admin.css?v=20260929-4">
 </head>
 <body class="cabinet-page admin-page">
   <header class="cabinet-header">
@@ -75,6 +75,21 @@
 
           <section class="admin-section" data-section="requests">
             <div class="cabinet-intro-row"><p>Общая картина обращений по всем городам и агентам.</p><span class="cabinet-auto-refresh"><i aria-hidden="true"></i> Обновляется автоматически</span></div>
+            <div class="admin-analytics" aria-label="Аналитика заявок">
+              <article class="admin-chart-card admin-status-chart-card">
+                <header><div><span>Структура заявок</span><h2>Заявки по статусам</h2></div><p>Доля каждого статуса</p></header>
+                <div class="admin-status-chart-layout">
+                  <div class="admin-donut-chart" data-status-chart role="img" aria-label="Распределение заявок по статусам">
+                    <div><strong data-status-chart-total>0</strong><span>заявок</span></div>
+                  </div>
+                  <div class="admin-status-chart-legend" data-status-chart-legend></div>
+                </div>
+              </article>
+              <article class="admin-chart-card admin-city-chart-card">
+                <header><div><span>География обращений</span><h2>Заявки по городам</h2></div><p>Доля от общего количества</p></header>
+                <div class="admin-city-chart" data-city-chart></div>
+              </article>
+            </div>
             <div class="cabinet-summary" aria-label="Сводка по заявкам">
               <button type="button" data-status-filter="new"><span>Новые</span><small>ожидают ответа</small><strong data-metric="new">0</strong></button>
               <button type="button" data-status-filter="in_progress"><span>В работе</span><small>требуют внимания</small><strong data-metric="in_progress">0</strong></button>
@@ -176,6 +191,6 @@
 
   <div class="admin-toast" data-toast role="status" aria-live="polite" hidden></div>
 
-  <script src="admin.js?v=20260929-1"></script>
+  <script src="admin.js?v=20260929-3"></script>
 </body>
 </html>

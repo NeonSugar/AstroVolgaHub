@@ -21,6 +21,10 @@
   const requestStatusMessage = document.querySelector('[data-request-status-message]');
   const requestReset = document.querySelector('[data-request-reset]');
   const requestPagination = document.querySelector('[data-request-pagination]');
+  const statusChart = document.querySelector('[data-status-chart]');
+  const statusChartTotal = document.querySelector('[data-status-chart-total]');
+  const statusChartLegend = document.querySelector('[data-status-chart-legend]');
+  const cityChart = document.querySelector('[data-city-chart]');
   const sidebarCityToggle = document.querySelector('[data-sidebar-city-toggle]');
   const sidebarCityList = document.querySelector('[data-sidebar-city-list]');
   const sidebarCityLabel = document.querySelector('[data-sidebar-city-label]');
@@ -57,10 +61,12 @@
   let selectedCabinetAgent = null;
   let toastTimer;
   const refreshInterval = 15_000;
-  const requestPageSize = 25;
-  const agentPageSize = 20;
+  const mobileAdminMedia = window.matchMedia('(max-width: 760px)');
+  const getRequestPageSize = () => mobileAdminMedia.matches ? 8 : 25;
+  const getAgentPageSize = () => mobileAdminMedia.matches ? 6 : 20;
 
   const statusLabels = { new: 'Новая', in_progress: 'В работе', processed: 'Обработанные', rejected: 'Отказ' };
+  const statusChartColors = { new: '#d41734', in_progress: '#e6a33b', processed: '#3a9b70', rejected: '#8d6670' };
   const serviceLabels = { osago: 'ОСАГО', kasko: 'КАСКО', health: 'Здоровье', property: 'Имущество', other: 'Другое' };
   const passwordAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
 
@@ -155,6 +161,8 @@
     requestReset.hidden = requestCount === 0 && !requestSearch.value;
     agentReset.hidden = agentCount === 0 && !agentSearch.value;
     document.querySelectorAll('[data-status-filter]').forEach((item) => item.classList.toggle('is-active', requestStatus.value === item.dataset.statusFilter));
+    document.querySelectorAll('[data-chart-status]').forEach((item) => item.classList.toggle('is-active', requestStatus.value === item.dataset.chartStatus));
+    document.querySelectorAll('[data-chart-city]').forEach((item) => item.classList.toggle('is-active', requestLocality.value === item.dataset.chartCity));
     renderSidebarCities();
   };
   const detailsLabel = (request) => {
@@ -208,12 +216,16 @@
   };
 
   const setSection = (name) => {
+    const sectionChanged = activeSection !== name;
     activeSection = name;
     sections.forEach((section) => { section.hidden = section.dataset.section !== name; });
     sectionButtons.forEach((button) => button.classList.toggle('is-active', button.dataset.sectionButton === name));
     mobileSectionButtons.forEach((button) => button.classList.toggle('is-active', button.dataset.mobileSection === name));
     pageTitle.textContent = name === 'agents' ? 'Управление агентами' : 'Заявки клиентов';
     renderSidebarCities();
+    if (sectionChanged && mobileAdminMedia.matches) {
+      window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+    }
   };
 
   const fillSelect = (select, items, initialLabel, selectedValue = select.value) => {
@@ -271,6 +283,93 @@
     sidebarCityList.append(createCityButton(), ...overview.cities.map(createCityButton));
   }
 
+  const renderAnalytics = () => {
+    const total = Number(overview.stats.all || 0);
+    const statuses = ['new', 'in_progress', 'processed', 'rejected'].map((status) => ({
+      status,
+      label: statusLabels[status],
+      color: statusChartColors[status],
+      count: Number(overview.stats[status] || 0)
+    }));
+    let cursor = 0;
+    const segments = statuses.flatMap((item) => {
+      if (!total || !item.count) return [];
+      const start = cursor;
+      cursor += (item.count / total) * 100;
+      return [`${item.color} ${start}% ${cursor}%`];
+    });
+    statusChart.style.background = segments.length ? `conic-gradient(${segments.join(',')})` : '#e8eff4';
+    statusChartTotal.textContent = total;
+    statusChart.setAttribute('aria-label', total
+      ? statuses.map((item) => `${item.label}: ${item.count}`).join(', ')
+      : 'Заявок пока нет');
+    statusChartLegend.replaceChildren(...statuses.map((item) => {
+      const percentage = total ? Math.round((item.count / total) * 100) : 0;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'admin-chart-legend-row';
+      button.dataset.chartStatus = item.status;
+      button.style.setProperty('--chart-color', item.color);
+      button.setAttribute('aria-label', `${item.label}: ${item.count}, ${percentage}%`);
+      const dot = document.createElement('i');
+      dot.setAttribute('aria-hidden', 'true');
+      const name = document.createElement('span');
+      name.textContent = item.label;
+      const count = document.createElement('b');
+      count.textContent = item.count;
+      const share = document.createElement('small');
+      share.textContent = `${percentage}%`;
+      button.append(dot, name, count, share);
+      button.addEventListener('click', () => {
+        requestStatus.value = requestStatus.value === item.status ? 'all' : item.status;
+        requestPage = 1;
+        updateFilterUi();
+        loadRequests();
+      });
+      return button;
+    }));
+
+    const cities = overview.cities
+      .filter((city) => Number(city.requests.all) > 0)
+      .sort((first, second) => Number(second.requests.all) - Number(first.requests.all) || first.localityName.localeCompare(second.localityName, 'ru'));
+    if (!cities.length) {
+      const empty = document.createElement('p');
+      empty.className = 'admin-chart-empty';
+      empty.textContent = 'Заявок по городам пока нет';
+      cityChart.replaceChildren(empty);
+      return;
+    }
+    cityChart.replaceChildren(...cities.map((city) => {
+      const count = Number(city.requests.all || 0);
+      const percentage = total ? (count / total) * 100 : 0;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'admin-city-chart-row';
+      button.dataset.chartCity = city.localitySlug;
+      button.style.setProperty('--city-share', `${percentage}%`);
+      button.setAttribute('aria-label', `${city.localityName}: ${count}, ${Math.round(percentage)}%`);
+      const name = document.createElement('span');
+      name.textContent = city.localityName;
+      const track = document.createElement('div');
+      track.className = 'admin-city-chart-track';
+      const bar = document.createElement('i');
+      track.append(bar);
+      const share = document.createElement('strong');
+      share.textContent = `${Math.round(percentage)}%`;
+      const amount = document.createElement('small');
+      amount.textContent = count;
+      button.append(name, track, share, amount);
+      button.addEventListener('click', () => {
+        requestLocality.value = requestLocality.value === city.localitySlug ? '' : city.localitySlug;
+        requestAgent.value = '';
+        requestPage = 1;
+        updateFilterUi();
+        loadRequests();
+      });
+      return button;
+    }));
+  };
+
   const renderOverview = () => {
     document.querySelectorAll('[data-metric]').forEach((element) => {
       element.textContent = overview.stats[element.dataset.metric] || 0;
@@ -287,6 +386,7 @@
     const formLocality = agentForm.elements.localitySlug;
     fillSelect(formLocality, localityOptions, 'Выберите населённый пункт');
 
+    renderAnalytics();
     updateFilterUi();
   };
 
@@ -324,6 +424,7 @@
     agent.append(createCellLabel('Агент'), agentName, agentPlace, agentPhone);
 
     const status = document.createElement('div');
+    status.className = 'admin-request-status';
     const badge = document.createElement('span');
     badge.className = 'cabinet-status-button admin-status-badge';
     badge.dataset.status = request.status;
@@ -331,6 +432,7 @@
     status.append(createCellLabel('Статус'), badge);
 
     const comment = document.createElement('div');
+    comment.className = 'admin-request-comment';
     const details = document.createElement('p');
     details.className = 'cabinet-request-details';
     details.textContent = detailsLabel(request) || '—';
@@ -348,22 +450,23 @@
   };
 
   const renderRequests = () => {
+    const pageSize = getRequestPageSize();
     const query = normalize(requestSearch.value);
     const visible = requests.filter((request) => !query || normalize([
       request.customerName, request.customerPhone, request.agent.displayName,
       request.agent.localityName, request.agent.address, request.agent.phone
     ].join(' ')).includes(query));
-    const pageCount = Math.max(1, Math.ceil(visible.length / requestPageSize));
+    const pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
     requestPage = Math.min(requestPage, pageCount);
-    const start = (requestPage - 1) * requestPageSize;
-    const pageItems = visible.slice(start, start + requestPageSize);
+    const start = (requestPage - 1) * pageSize;
+    const pageItems = visible.slice(start, start + pageSize);
     requestList.replaceChildren(...pageItems.map(createRequestCard));
     requestTable.hidden = !visible.length;
     requestEmpty.hidden = Boolean(visible.length);
     requestStatusMessage.textContent = visible.length
-      ? `Показано ${start + 1}–${Math.min(start + requestPageSize, visible.length)} из ${visible.length} заявок`
+      ? `Показано ${start + 1}–${Math.min(start + pageSize, visible.length)} из ${visible.length} заявок`
       : '';
-    renderPagination(requestPagination, visible.length, requestPageSize, requestPage, (page) => {
+    renderPagination(requestPagination, visible.length, pageSize, requestPage, (page) => {
       requestPage = page;
       renderRequests();
       requestTable.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -444,6 +547,7 @@
   };
 
   const renderAgents = () => {
+    const pageSize = getAgentPageSize();
     const query = normalize(agentSearch.value);
     const visible = agents.filter((agent) => {
       if (agentLocality.value && agent.localitySlug !== agentLocality.value) return false;
@@ -451,16 +555,16 @@
       if (agentState.value === 'inactive' && agent.isActive) return false;
       return !query || normalize(`${agent.displayName} ${agent.localityName} ${agent.address} ${agent.phone} ${agent.login || ''}`).includes(query);
     });
-    const pageCount = Math.max(1, Math.ceil(visible.length / agentPageSize));
+    const pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
     agentPage = Math.min(agentPage, pageCount);
-    const start = (agentPage - 1) * agentPageSize;
-    const pageItems = visible.slice(start, start + agentPageSize);
+    const start = (agentPage - 1) * pageSize;
+    const pageItems = visible.slice(start, start + pageSize);
     agentList.replaceChildren(...pageItems.map(createAgentCard));
     agentEmpty.hidden = Boolean(visible.length);
     agentStatusMessage.textContent = visible.length
-      ? `Показано ${start + 1}–${Math.min(start + agentPageSize, visible.length)} из ${visible.length} агентов`
+      ? `Показано ${start + 1}–${Math.min(start + pageSize, visible.length)} из ${visible.length} агентов`
       : '';
-    renderPagination(agentPagination, visible.length, agentPageSize, agentPage, (page) => {
+    renderPagination(agentPagination, visible.length, pageSize, agentPage, (page) => {
       agentPage = page;
       renderAgents();
       agentList.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -647,6 +751,12 @@
     const isOpen = panel.classList.toggle('is-mobile-open');
     button.setAttribute('aria-expanded', String(isOpen));
   }));
+  mobileAdminMedia.addEventListener('change', () => {
+    requestPage = 1;
+    agentPage = 1;
+    renderRequests();
+    renderAgents();
+  });
   document.querySelector('[data-add-agent]').addEventListener('click', openAgentModal);
   document.querySelectorAll('[data-agent-modal-close]').forEach((button) => button.addEventListener('click', closeAgentModal));
   document.querySelectorAll('[data-cabinet-modal-close]').forEach((button) => button.addEventListener('click', closeCabinetModal));
