@@ -1,4 +1,6 @@
 .admin-page .cabinet-sidebar-nav{gap:8px}
+.admin-page .cabinet-login-card{width:min(100%,560px)}
+.admin-page .cabinet-login-card h1{max-width:100%;font-size:clamp(36px,3.6vw,50px);overflow-wrap:anywhere}
 .admin-content{max-width:1660px}
 .admin-section[hidden],.admin-page [hidden]{display:none!important}
 .admin-add-button{min-height:48px;padding:0 24px;border:0;cursor:pointer;white-space:nowrap}
