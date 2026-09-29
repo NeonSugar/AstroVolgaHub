@@ -24,6 +24,18 @@ const address = String(args.address || '').trim();
 const addressKey = normalizeAddress(address);
 const phone = normalizePhone(args.phone);
 const displayName = String(args.name || login).trim();
+const primaryCities = new Map([
+  ['melitopol', ['Мелитополь', 0]],
+  ['berdyansk', ['Бердянск', 1]],
+  ['energodar', ['Энергодар', 2]],
+  ['tokmak', ['Токмак', 3]],
+  ['vasilevka', ['Васильевка', 4]],
+  ['kamenka', ['Каменка-Днепровская', 5]],
+  ['primorsk', ['Приморск', 6]],
+  ['veseloe', ['Весёлое', 7]],
+  ['znamenka', ['Великая Знаменка', 8]]
+]);
+const [localityName, localityOrder] = primaryCities.get(city) || [city, null];
 
 if (!login || !/^[a-z0-9-]{2,80}$/.test(city) || !address || address.length > 240
   || !addressKey || phone.length < 10 || phone.length > 15 || !displayName || displayName.length > 160) {
@@ -40,16 +52,22 @@ if (!login || !/^[a-z0-9-]{2,80}$/.test(city) || !address || address.length > 24
     await runMigrations(pool);
     const passwordHash = await bcrypt.hash(password, 12);
     const result = await pool.query(
-      `INSERT INTO agents (id, login, display_name, city_slug, address, address_key, phone, password_hash, cabinet_enabled)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
+      `INSERT INTO agents
+         (id, login, display_name, city_slug, locality_name, locality_order, is_primary_city,
+          address, address_key, phone, password_hash, cabinet_enabled, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, TRUE, TRUE)
        ON CONFLICT (city_slug, address_key, phone)
        DO UPDATE SET login = EXCLUDED.login,
                      display_name = EXCLUDED.display_name,
                      password_hash = EXCLUDED.password_hash,
                      cabinet_enabled = TRUE,
+                     is_active = TRUE,
                      updated_at = NOW()
        RETURNING id, login, display_name, city_slug, address, phone`,
-      [randomUUID(), login, displayName, city, address, addressKey, phone, passwordHash]
+      [
+        randomUUID(), login, displayName, city, localityName, localityOrder,
+        primaryCities.has(city), address, addressKey, phone, passwordHash
+      ]
     );
     console.log('Agent cabinet enabled:', result.rows[0]);
   } finally {

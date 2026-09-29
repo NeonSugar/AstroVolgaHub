@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#edf5fb">
+  <title>Панель администратора | Астро-Волга</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css?v=20260909-1">
+  <link rel="stylesheet" href="../agent/agent.css?v=20260909-8">
+  <link rel="stylesheet" href="admin.css?v=20260929-1">
+</head>
+<body class="cabinet-page admin-page">
+  <header class="cabinet-header">
+    <div class="container cabinet-header-inner">
+      <a href="../index.html" aria-label="Астро-Волга — на главную"><img class="brand-logo" src="../assets/logo.svg" alt="Страховая компания Астро-Волга" width="240" height="44"></a>
+      <a class="cabinet-home-link" href="../index.html">Вернуться на сайт</a>
+    </div>
+  </header>
+
+  <main class="cabinet-main">
+    <section class="cabinet-login" data-login-view>
+      <div class="cabinet-login-card">
+        <p class="eyebrow eyebrow-blue"><span></span> Управление сервисом</p>
+        <h1>Панель администратора</h1>
+        <p>Войдите, чтобы управлять агентами и просматривать обращения клиентов.</p>
+        <form class="cabinet-form" data-login-form novalidate>
+          <label><span>Логин</span><input name="login" type="text" autocomplete="username" maxlength="120" required></label>
+          <label><span>Пароль</span><input name="password" type="password" autocomplete="current-password" maxlength="200" required></label>
+          <button class="button button-primary" type="submit">Войти</button>
+          <p class="cabinet-form-status" data-login-status role="status"></p>
+        </form>
+      </div>
+    </section>
+
+    <section class="cabinet-dashboard" data-dashboard hidden>
+      <aside class="cabinet-sidebar">
+        <a class="cabinet-sidebar-brand" href="../index.html" aria-label="Астро-Волга — на главную">
+          <span class="cabinet-sidebar-logo"><img src="../assets/астроволга.svg" alt="Страховая компания Астро-Волга" width="226" height="42"></span>
+          <span>Панель администратора</span>
+        </a>
+        <nav class="cabinet-sidebar-nav" aria-label="Разделы панели">
+          <button class="is-active" type="button" data-section-button="requests"><span class="cabinet-nav-icon" aria-hidden="true">▦</span>Заявки<b data-nav-count="requests">0</b></button>
+          <button type="button" data-section-button="agents"><span class="cabinet-nav-icon" aria-hidden="true">◎</span>Агенты<b data-nav-count="agents">0</b></button>
+          <div class="admin-sidebar-cities">
+            <button class="admin-sidebar-city-toggle" type="button" data-sidebar-city-toggle aria-expanded="false">
+              <span class="cabinet-nav-icon" aria-hidden="true">⌖</span>
+              <span><strong>Города</strong><small data-sidebar-city-label>Все города</small></span>
+              <i aria-hidden="true"></i>
+            </button>
+            <div class="admin-sidebar-city-list" data-sidebar-city-list hidden></div>
+          </div>
+        </nav>
+        <div class="cabinet-sidebar-bottom">
+          <a class="cabinet-open-site" href="../index.html">↗ Открыть сайт</a>
+          <div class="cabinet-profile">
+            <span class="cabinet-avatar" data-admin-initial>А</span>
+            <span class="cabinet-profile-copy"><strong data-admin-name>Администратор</strong><small>Полный доступ</small></span>
+            <button class="cabinet-profile-logout" type="button" data-logout aria-label="Выйти из панели">→</button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="cabinet-workspace">
+        <header class="cabinet-mobile-header admin-mobile-header">
+          <a href="../index.html" aria-label="Астро-Волга — на главную"><img src="../assets/logo.svg" alt="Астро-Волга" width="166" height="31"></a>
+          <div><button type="button" data-mobile-section="requests">Заявки</button><button type="button" data-mobile-section="agents">Агенты</button><button class="cabinet-mobile-logout" type="button" data-logout>Выйти</button></div>
+        </header>
+        <div class="cabinet-content admin-content">
+          <div class="cabinet-title-row">
+            <div><p class="eyebrow eyebrow-blue"><span></span> Астро-Волга · администрирование</p><h1 data-page-title>Заявки клиентов</h1></div>
+            <time class="cabinet-current-date" data-current-date></time>
+          </div>
+
+          <section class="admin-section" data-section="requests">
+            <div class="cabinet-intro-row"><p>Общая картина обращений по всем городам и агентам.</p><span class="cabinet-auto-refresh"><i aria-hidden="true"></i> Обновляется автоматически</span></div>
+            <div class="cabinet-summary" aria-label="Сводка по заявкам">
+              <button type="button" data-status-filter="new"><span>Новые</span><small>ожидают ответа</small><strong data-metric="new">0</strong></button>
+              <button type="button" data-status-filter="in_progress"><span>В работе</span><small>требуют внимания</small><strong data-metric="in_progress">0</strong></button>
+              <button type="button" data-status-filter="processed"><span>Обработанные</span><small>завершённые заявки</small><strong data-metric="processed">0</strong></button>
+              <button type="button" data-status-filter="rejected"><span>Отказы</span><small>отклонённые заявки</small><strong data-metric="rejected">0</strong></button>
+            </div>
+
+            <div class="cabinet-controls admin-controls">
+              <div class="admin-filter-area">
+                <button class="admin-filter-toggle" type="button" data-filter-toggle="requests" aria-expanded="false"><span>Фильтры</span><b data-filter-count="requests">0</b><i aria-hidden="true"></i></button>
+                <div class="admin-selects" data-filter-panel="requests">
+                  <label><span>Статус</span><select data-request-status><option value="all">Все статусы</option><option value="new">Новые</option><option value="in_progress">В работе</option><option value="processed">Обработанные</option><option value="rejected">Отказ</option></select></label>
+                  <label><span>Населённый пункт</span><select data-request-locality><option value="">Все населённые пункты</option></select></label>
+                  <label><span>Агент</span><select data-request-agent><option value="">Все агенты</option></select></label>
+                  <button class="admin-reset-filters" type="button" data-request-reset hidden>Сбросить</button>
+                </div>
+              </div>
+              <label class="cabinet-search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4"></path></svg><input type="search" placeholder="Клиент, телефон или агент" data-request-search></label>
+            </div>
+            <p class="cabinet-dashboard-status" data-request-status-message role="status"></p>
+            <div class="cabinet-request-table admin-request-table">
+              <div class="cabinet-table-head" aria-hidden="true"><span>Клиент</span><span>Агент</span><span>Статус</span><span>Комментарий</span><span>Дата</span></div>
+              <div class="cabinet-request-list" data-request-list></div>
+            </div>
+            <nav class="admin-pagination" data-request-pagination aria-label="Страницы заявок"></nav>
+            <div class="cabinet-empty" data-request-empty hidden><span>☎</span><strong>Заявок не найдено</strong><p>Измените фильтры или поисковый запрос.</p></div>
+          </section>
+
+          <section class="admin-section" data-section="agents" hidden>
+            <div class="cabinet-intro-row"><p>Управляйте отображением агентов на сайте и доступом к личному кабинету.</p><button class="button button-primary admin-add-button" type="button" data-add-agent>+ Добавить агента</button></div>
+            <div class="admin-agent-metrics">
+              <article><span>Активные агенты</span><strong data-agent-metric="active">0</strong></article>
+              <article><span>С личным кабинетом</span><strong data-agent-metric="cabinets">0</strong></article>
+              <article><span>Удалённые</span><strong data-agent-metric="inactive">0</strong></article>
+            </div>
+            <div class="cabinet-controls admin-controls">
+              <div class="admin-filter-area">
+                <button class="admin-filter-toggle" type="button" data-filter-toggle="agents" aria-expanded="false"><span>Фильтры</span><b data-filter-count="agents">0</b><i aria-hidden="true"></i></button>
+                <div class="admin-selects" data-filter-panel="agents">
+                  <label><span>Населённый пункт</span><select data-agent-locality><option value="">Все населённые пункты</option></select></label>
+                  <label><span>Состояние</span><select data-agent-state><option value="active">Активные</option><option value="inactive">Удалённые</option><option value="all">Все</option></select></label>
+                  <button class="admin-reset-filters" type="button" data-agent-reset>Сбросить</button>
+                </div>
+              </div>
+              <label class="cabinet-search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4"></path></svg><input type="search" placeholder="Имя, адрес или телефон" data-agent-search></label>
+            </div>
+            <p class="cabinet-dashboard-status" data-agent-status-message role="status"></p>
+            <div class="admin-agent-list" data-agent-list></div>
+            <nav class="admin-pagination" data-agent-pagination aria-label="Страницы агентов"></nav>
+            <div class="cabinet-empty" data-agent-empty hidden><span>◎</span><strong>Агенты не найдены</strong><p>Измените фильтры или добавьте нового агента.</p></div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="cabinet-status-modal" data-agent-modal hidden>
+    <button class="cabinet-status-backdrop" type="button" data-agent-modal-close aria-label="Закрыть окно"></button>
+    <form class="cabinet-status-dialog admin-agent-dialog" data-agent-form role="dialog" aria-modal="true" aria-labelledby="admin-agent-title" novalidate>
+      <button class="cabinet-status-close" type="button" data-agent-modal-close aria-label="Закрыть">×</button>
+      <p class="eyebrow eyebrow-blue"><span></span> Новый представитель</p>
+      <h2 id="admin-agent-title">Добавить агента</h2>
+      <p class="cabinet-status-description">После сохранения агент сразу появится на соответствующей странице сайта.</p>
+      <div class="admin-agent-form-grid">
+        <label class="is-wide"><span>Населённый пункт</span><select name="localitySlug" required></select></label>
+        <label class="is-wide"><span>Имя агента</span><input name="displayName" type="text" maxlength="160" required></label>
+        <label class="is-wide"><span>Адрес</span><input name="address" type="text" maxlength="240" required></label>
+        <label><span>Телефон</span><input name="phone" type="tel" placeholder="+7 900 000-00-00" maxlength="24" required></label>
+        <label><span>Ссылка на карту</span><input name="mapUrl" type="url" placeholder="https://yandex.ru/maps/…" maxlength="500"></label>
+        <label class="is-wide"><span>Примечание</span><input name="note" type="text" maxlength="240" placeholder="Необязательно"></label>
+        <label class="admin-cabinet-toggle is-wide"><input name="cabinetEnabled" type="checkbox"><span>Создать личный кабинет</span></label>
+        <div class="admin-cabinet-fields is-wide" data-cabinet-fields hidden>
+          <label><span>Логин</span><span class="admin-credential-control"><input name="login" type="text" maxlength="120" autocomplete="off"><button type="button" data-generate-login>Новый</button></span></label>
+          <label><span>Пароль, от 12 символов</span><span class="admin-credential-control"><input name="password" type="text" maxlength="200" autocomplete="new-password"><button type="button" data-generate-password>Новый</button></span></label>
+          <div class="admin-credential-note"><span>Данные создаются автоматически. Скопируйте их и передайте агенту.</span><button type="button" data-copy-new-agent-credentials>Скопировать</button></div>
+        </div>
+      </div>
+      <div class="cabinet-status-actions"><button class="button button-secondary" type="button" data-agent-modal-close>Отмена</button><button class="button button-primary" type="submit">Добавить</button></div>
+      <p class="cabinet-form-status" data-agent-form-status role="status"></p>
+    </form>
+  </div>
+
+  <div class="cabinet-status-modal" data-cabinet-modal hidden>
+    <button class="cabinet-status-backdrop" type="button" data-cabinet-modal-close aria-label="Закрыть окно"></button>
+    <form class="cabinet-status-dialog admin-cabinet-dialog" data-cabinet-form role="dialog" aria-modal="true" aria-labelledby="admin-cabinet-title" novalidate>
+      <button class="cabinet-status-close" type="button" data-cabinet-modal-close aria-label="Закрыть">×</button>
+      <p class="eyebrow eyebrow-blue"><span></span> Доступ агента</p>
+      <h2 id="admin-cabinet-title" data-cabinet-modal-title>Создать личный кабинет</h2>
+      <p class="cabinet-status-description" data-cabinet-agent-name></p>
+      <div class="admin-cabinet-create-fields">
+        <label><span>Логин</span><span class="admin-credential-control"><input name="login" type="text" maxlength="120" autocomplete="off" required><button type="button" data-cabinet-generate-login>Новый</button></span></label>
+        <label><span>Пароль, от 12 символов</span><span class="admin-credential-control"><input name="password" type="text" maxlength="200" autocomplete="new-password" required><button type="button" data-cabinet-generate-password>Новый</button></span></label>
+      </div>
+      <div class="admin-credential-note"><span data-cabinet-hint>Скопируйте данные и передайте их агенту.</span><button type="button" data-copy-cabinet-credentials>Скопировать</button></div>
+      <div class="cabinet-status-actions"><button class="button button-secondary" type="button" data-cabinet-modal-close>Отмена</button><button class="button button-primary" type="submit">Создать ЛК</button></div>
+      <p class="cabinet-form-status" data-cabinet-form-status role="status"></p>
+    </form>
+  </div>
+
+  <div class="admin-toast" data-toast role="status" aria-live="polite" hidden></div>
+
+  <script src="admin.js?v=20260929-1"></script>
+</body>
+</html>

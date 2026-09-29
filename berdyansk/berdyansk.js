@@ -1,4 +1,4 @@
-(() => {
+(async () => {
   'use strict';
 
   const cityKeys = new Set([
@@ -35,7 +35,6 @@
     vasilevka: 'Васильевка', veseloe: 'Весёлое', znamenka: 'Великая Знаменка'
   };
   const cityName = cityNames[cityKey] || document.querySelector('.city-hero h1')?.textContent.trim() || '';
-  const additions = window.ASTRO_AGENT_DATA?.existing?.[cityKey] || [];
   const agentsGrid = document.querySelector('#agents-list');
 
   const agentLabel = (count) => {
@@ -170,26 +169,47 @@
     return container;
   };
 
-  const createAgentCard = (address, phones) => {
+  const groupAgentPoints = (agents) => {
+    const points = new Map();
+    agents.forEach((agent) => {
+      const addressKey = agent.addressKey || normalizeAddress(agent.address);
+      const isOffsite = addressKey === 'безофиса';
+      const pointKey = isOffsite ? `${addressKey}:${agent.id}` : addressKey;
+      if (!points.has(pointKey)) {
+        points.set(pointKey, {
+          address: agent.address,
+          note: agent.note,
+          mapUrl: agent.mapUrl,
+          agents: []
+        });
+      }
+      points.get(pointKey).agents.push(agent);
+    });
+    return [...points.values()];
+  };
+
+  const createAgentCard = ({ address, note, mapUrl, agents }) => {
+    const phones = [...new Set(agents.map((agent) => agent.phone))];
     const card = document.createElement('article');
     card.className = 'agent-card';
     card.dataset.agentCard = '';
+    card.dataset.agentIds = agents.map((agent) => agent.id).join(',');
     card.dataset.search = `${cityName} ${address} ${phones.map(formatPhone).join(' ')}`;
     card.innerHTML = `<span class="agent-number"></span><h3>${address}</h3>`;
     const isOffsite = normalizeAddress(address) === 'безофиса';
-    if (isOffsite) {
-      card.classList.add('agent-card-offsite');
-      const note = document.createElement('p');
-      note.className = 'agent-note';
-      note.textContent = 'Свяжитесь с агентом, чтобы договориться о встрече';
-      card.append(note);
+    if (isOffsite || note) {
+      if (isOffsite) card.classList.add('agent-card-offsite');
+      const noteElement = document.createElement('p');
+      noteElement.className = 'agent-note';
+      noteElement.textContent = note || 'Свяжитесь с агентом, чтобы договориться о встрече';
+      card.append(noteElement);
     }
     const phoneContainer = ensurePhoneContainer(card);
     phones.forEach((phone) => phoneContainer.append(createPhoneLink(phone)));
     if (!isOffsite) {
       const mapLink = document.createElement('a');
       mapLink.className = 'agent-map-link';
-      mapLink.href = `https://yandex.ru/maps/?text=${encodeURIComponent(`${cityName}, ${address}`)}`;
+      mapLink.href = mapUrl || `https://yandex.ru/maps/?text=${encodeURIComponent(`${cityName}, ${address}`)}`;
       mapLink.target = '_blank';
       mapLink.rel = 'noopener';
       mapLink.innerHTML = 'Найти на карте <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg>';
@@ -198,30 +218,35 @@
     return card;
   };
 
-  if (agentsGrid && additions.length) {
-    additions.forEach(([address, phones]) => {
-      if (normalizeAddress(address) === 'безофиса') {
-        phones.forEach((phone) => agentsGrid.append(createAgentCard(address, [phone])));
-        return;
-      }
-      const matchingCard = [...agentsGrid.querySelectorAll('[data-agent-card]')]
-        .find((card) => normalizeAddress(card.querySelector('h3')?.textContent) === normalizeAddress(address));
-      if (!matchingCard) {
-        agentsGrid.append(createAgentCard(address, phones));
-        return;
-      }
-      const container = ensurePhoneContainer(matchingCard);
-      const currentPhones = new Set([...matchingCard.querySelectorAll('[href^="tel:"]')]
-        .map((link) => link.href.replace(/\D/g, '')));
-      phones.filter((phone) => !currentPhones.has(phone)).forEach((phone) => container.append(createPhoneLink(phone)));
-      matchingCard.dataset.search += ` ${phones.map(formatPhone).join(' ')}`;
-    });
+  let publicAgents = [];
+  let agentsLoadError = '';
+  if (agentsGrid) {
+    agentsGrid.setAttribute('aria-busy', 'true');
+    agentsGrid.replaceChildren();
+    try {
+      const response = await fetch(`/api/public/agents?locality=${encodeURIComponent(cityKey)}`, {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' }
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Не удалось загрузить список агентов.');
+      publicAgents = Array.isArray(data.agents) ? data.agents : [];
+      groupAgentPoints(publicAgents).forEach((point) => agentsGrid.append(createAgentCard(point)));
+    } catch (error) {
+      agentsLoadError = error.message || 'Не удалось загрузить список агентов.';
+    } finally {
+      agentsGrid.removeAttribute('aria-busy');
+    }
   }
 
   const search = document.querySelector('#agent-search');
   const cards = [...document.querySelectorAll('[data-agent-card]')];
   const result = document.querySelector('#agents-result');
   const empty = document.querySelector('#agents-empty');
+  if (agentsLoadError && empty) {
+    empty.textContent = agentsLoadError;
+    empty.hidden = false;
+  }
 
   const pointLabel = (count) => {
     const mod100 = count % 100;
@@ -266,19 +291,7 @@
 
   search?.addEventListener('input', filterAgents);
 
-  const setupCallbackRequests = async () => {
-    let publicAgents;
-    try {
-      const response = await fetch(`/api/public/agents?city=${encodeURIComponent(cityKey)}`, {
-        credentials: 'same-origin',
-        headers: { Accept: 'application/json' }
-      });
-      if (!response.ok) return;
-      const data = await response.json();
-      publicAgents = Array.isArray(data.agents) ? data.agents : [];
-    } catch (_error) {
-      return;
-    }
+  const setupCallbackRequests = () => {
     if (!publicAgents.length) return;
 
     const modal = document.createElement('div');
@@ -333,10 +346,8 @@
     });
 
     cards.forEach((card) => {
-      const addressKey = normalizeAddress(card.querySelector('h3')?.textContent);
-      const phoneNumbers = [...card.querySelectorAll('[href^="tel:"]')]
-        .map((link) => link.href.replace(/\D/g, ''));
-      const agent = publicAgents.find((item) => item.addressKey === addressKey && phoneNumbers.includes(item.phone));
+      const agentIds = new Set((card.dataset.agentIds || '').split(',').filter(Boolean));
+      const agent = publicAgents.find((item) => agentIds.has(item.id) && item.hasCabinet);
       if (!agent) return;
       const button = document.createElement('button');
       button.className = 'agent-callback-button';

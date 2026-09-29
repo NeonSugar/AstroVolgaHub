@@ -7,6 +7,7 @@ import express from 'express';
 import rateLimit from 'express-rate-limit';
 import session from 'express-session';
 import helmet from 'helmet';
+import { createAdminRouter } from './admin-routes.js';
 import {
   callbackStatuses,
   isUuid,
@@ -55,10 +56,18 @@ const requireCsrf = (request, response, next) => {
 const publicAgent = (row) => ({
   id: row.id,
   displayName: row.display_name,
+  localitySlug: row.city_slug,
+  localityName: row.locality_name || row.city_slug,
   citySlug: row.city_slug,
+  districtSlug: row.district_slug,
+  districtName: row.district_name,
+  isPrimaryCity: Boolean(row.is_primary_city),
   address: row.address,
   addressKey: row.address_key,
-  phone: row.phone
+  phone: row.phone,
+  note: row.note,
+  mapUrl: row.map_url,
+  hasCabinet: Boolean(row.cabinet_enabled)
 });
 
 const callbackRequest = (row) => ({
@@ -81,12 +90,27 @@ export const createApp = ({ pool, config }) => {
     if (!request.session.agentId) return response.status(401).json({ error: 'Требуется вход в личный кабинет.' });
     try {
       const result = await pool.query(
-        'SELECT 1 FROM agents WHERE id = $1 AND cabinet_enabled = TRUE',
+        'SELECT 1 FROM agents WHERE id = $1 AND cabinet_enabled = TRUE AND is_active = TRUE',
         [request.session.agentId]
       );
       if (result.rowCount) return next();
       await sessionDestroy(request);
       return response.status(401).json({ error: 'Доступ к кабинету отключён.' });
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  const requireAdmin = async (request, response, next) => {
+    if (!request.session.adminId) return response.status(401).json({ error: 'Требуется вход администратора.' });
+    try {
+      const result = await pool.query(
+        'SELECT 1 FROM administrators WHERE id = $1 AND is_active = TRUE',
+        [request.session.adminId]
+      );
+      if (result.rowCount) return next();
+      await sessionDestroy(request);
+      return response.status(401).json({ error: 'Доступ администратора отключён.' });
     } catch (error) {
       return next(error);
     }
@@ -164,14 +188,29 @@ export const createApp = ({ pool, config }) => {
 
   app.get('/api/public/agents', async (request, response, next) => {
     try {
-      const city = String(request.query.city || '').trim().toLowerCase();
-      if (!/^[a-z0-9-]{2,80}$/.test(city)) return response.status(400).json({ error: 'Некорректный город.' });
+      const locality = String(request.query.locality || request.query.city || '').trim().toLowerCase();
+      if (locality && !/^[a-z0-9-]{2,80}$/.test(locality)) {
+        return response.status(400).json({ error: 'Некорректный населённый пункт.' });
+      }
+      const parameters = [];
+      let localityFilter = '';
+      if (locality) {
+        parameters.push(locality);
+        localityFilter = 'AND city_slug = $1';
+      }
       const result = await pool.query(
-        `SELECT id, display_name, city_slug, address, address_key, phone
+        `SELECT id, display_name, city_slug, locality_name, district_slug, district_name,
+                is_primary_city, address, address_key, phone, note, map_url, cabinet_enabled
          FROM agents
-         WHERE city_slug = $1 AND cabinet_enabled = TRUE
-         ORDER BY address, display_name`,
-        [city]
+         WHERE is_active = TRUE ${localityFilter}
+         ORDER BY is_primary_city DESC NULLS LAST,
+                  district_order NULLS FIRST,
+                  locality_order NULLS LAST,
+                  locality_name,
+                  sort_order NULLS LAST,
+                  address,
+                  phone`,
+        parameters
       );
       return response.json({ agents: result.rows.map(publicAgent) });
     } catch (error) {
@@ -190,7 +229,7 @@ export const createApp = ({ pool, config }) => {
       }
 
       const agentResult = await pool.query(
-        'SELECT id FROM agents WHERE id = $1 AND cabinet_enabled = TRUE',
+        'SELECT id FROM agents WHERE id = $1 AND cabinet_enabled = TRUE AND is_active = TRUE',
         [agentId]
       );
       if (!agentResult.rowCount) return response.status(404).json({ error: 'Личный кабинет агента недоступен.' });
@@ -222,7 +261,7 @@ export const createApp = ({ pool, config }) => {
       const result = await pool.query(
         `SELECT id, login, display_name, city_slug, address, phone, password_hash
          FROM agents
-         WHERE login = $1 AND cabinet_enabled = TRUE`,
+         WHERE login = $1 AND cabinet_enabled = TRUE AND is_active = TRUE`,
         [login]
       );
       const agent = result.rows[0];
@@ -261,7 +300,7 @@ export const createApp = ({ pool, config }) => {
       if (!request.session.agentId) return response.status(401).json({ error: 'Требуется вход в личный кабинет.' });
       const result = await pool.query(
         `SELECT display_name, city_slug, address, phone
-         FROM agents WHERE id = $1 AND cabinet_enabled = TRUE`,
+         FROM agents WHERE id = $1 AND cabinet_enabled = TRUE AND is_active = TRUE`,
         [request.session.agentId]
       );
       if (!result.rowCount) {
@@ -343,14 +382,29 @@ export const createApp = ({ pool, config }) => {
     }
   });
 
+  app.use('/api/admin', createAdminRouter({
+    pool,
+    loginLimiter,
+    requireAdmin,
+    requireCsrf,
+    getCsrfToken,
+    sessionRegenerate,
+    sessionDestroy
+  }));
+
   app.use('/assets', express.static(join(projectRoot, 'assets'), { dotfiles: 'deny', maxAge: production ? '7d' : 0 }));
   cityDirectories.forEach((city) => {
     app.use(`/${city}`, express.static(join(projectRoot, city), { dotfiles: 'deny', maxAge: production ? '1h' : 0 }));
   });
   app.use('/agent', express.static(join(projectRoot, 'agent'), { dotfiles: 'deny', maxAge: production ? '1h' : 0 }));
-  app.get(['/styles.css', '/script.js', '/agents-directory.js', '/yandex-metrika.js'], (request, response) => {
+  app.use('/admin', express.static(join(projectRoot, 'admin'), { dotfiles: 'deny', maxAge: production ? '1h' : 0 }));
+  app.get(['/styles.css', '/script.js', '/yandex-metrika.js'], (request, response) => {
     response.sendFile(join(projectRoot, request.path.slice(1)));
   });
+
+  // app.get(['/berdyansk/yandex-metrika.js', '/energodar/yandex-metrika.js', '/kamenka/yandex-metrika.js', '/melitopol/yandex-metrika.js', '/primorsk/yandex-metrika.js', '/tokmak/yandex-metrika.js', '/vasilevka/yandex-metrika.js', '/veseloe/yandex-metrika.js', '/znamenka/yandex-metrika.js'], (request, response) => {
+  //   response.sendFile(join(projectRoot, request.path.slice(1)));
+  // });
 
   app.get('/yandex_5feb11370c3fa519.html', (_request, response) => {
     response.sendFile(join(projectRoot, 'yandex_5feb11370c3fa519.html'));
