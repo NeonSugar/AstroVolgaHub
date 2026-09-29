@@ -1,40 +1,79 @@
-(() => {
+(async () => {
   'use strict';
 
-  // Данные из файлов «списки агентов.xlsx» и «АДРЕСА АГЕНТОВ для сайта.xlsx».
-  const cities = {
-    melitopol: { name: 'Мелитополь', agents: 57 },
-    berdyansk: { name: 'Бердянск', agents: 25 },
-    energodar: { name: 'Энергодар', agents: 14 },
-    tokmak: { name: 'Токмак', agents: 11 },
-    vasilevka: { name: 'Васильевка', agents: 3 },
-    kamenka: { name: 'Каменка-Днепровская', agents: 7 },
-    primorsk: { name: 'Приморск', agents: 9 },
-    veseloe: { name: 'Весёлое', agents: 2 },
-    znamenka: { name: 'Великая Знаменка', agents: 2 }
+  const primaryCityNames = {
+    melitopol: 'Мелитополь',
+    berdyansk: 'Бердянск',
+    energodar: 'Энергодар',
+    tokmak: 'Токмак',
+    vasilevka: 'Васильевка',
+    kamenka: 'Каменка-Днепровская',
+    primorsk: 'Приморск',
+    veseloe: 'Весёлое',
+    znamenka: 'Великая Знаменка'
   };
 
-  const additionalDirectory = window.ASTRO_AGENT_DATA?.additional || {};
-  const additionalCities = Object.fromEntries(Object.entries(additionalDirectory).map(([key, [name, points]]) => [
+  const groupAgentPoints = (agents) => {
+    const points = new Map();
+    agents.forEach((agent) => {
+      const pointKey = agent.addressKey === 'безофиса' ? `безофиса:${agent.id}` : agent.addressKey;
+      if (!points.has(pointKey)) points.set(pointKey, [agent.address, []]);
+      const phones = points.get(pointKey)[1];
+      if (!phones.includes(agent.phone)) phones.push(agent.phone);
+    });
+    return [...points.values()];
+  };
+
+  let directoryAgents = [];
+  try {
+    const response = await fetch('/api/public/agents', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' }
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Не удалось загрузить каталог агентов.');
+    directoryAgents = Array.isArray(data.agents) ? data.agents : [];
+  } catch (error) {
+    console.error(error);
+  }
+
+  const agentsByLocality = new Map();
+  directoryAgents.forEach((agent) => {
+    if (!agentsByLocality.has(agent.localitySlug)) agentsByLocality.set(agent.localitySlug, []);
+    agentsByLocality.get(agent.localitySlug).push(agent);
+  });
+
+  const cities = Object.fromEntries(Object.entries(primaryCityNames).map(([key, name]) => [
     key,
-    { name, agents: points.reduce((sum, [address, phones]) => sum + (address === 'Без офиса' ? phones.length : 1), 0) }
+    { name, agents: (agentsByLocality.get(key) || []).length }
   ]));
 
-  // Районирование по справочнику административно-территориального деления
-  // Запорожской области (границы районов по состоянию на 16 сентября 1991 года).
-  const additionalDistricts = [
-    { key: 'akimovsky', name: 'Акимовский район', cities: ['akimovka', 'kirillovka', 'shevlyuki'] },
-    { key: 'berdyansky', name: 'Бердянский район', cities: ['andreevka', 'osipenko', 'troyany'] },
-    { key: 'vasilevsky', name: 'Васильевский район', cities: ['dneprorudnoe', 'malaya-belozerka', 'skelki'] },
-    { key: 'kamensko-dneprovsky', name: 'Каменско-Днепровский район', cities: ['blagoveshchenka', 'velikaya-belozerka', 'vodyanoe', 'zapovitnoe', 'ivanovka', 'novovodyanoe', 'novodneprovka'] },
-    { key: 'kuybyshevsky', name: 'Куйбышевский район', cities: ['belotserkovka', 'kamysh-zarya', 'kuybyshevo', 'rozovka'] },
-    { key: 'melitopolsky', name: 'Мелитопольский район', cities: ['novobogdanovka', 'polyanovka', 'terpenye'] },
-    { key: 'mikhailovsky', name: 'Михайловский район', cities: ['mikhailovka'] },
-    { key: 'pologovsky', name: 'Пологовский район', cities: ['pologi'] },
-    { key: 'priazovsky', name: 'Приазовский район', cities: ['aleksandrovka', 'annovka', 'bogdanovka', 'vladimirovka', 'girsovka', 'dunaevka', 'nadezhdino', 'novovasilevka', 'novokonstantinovka', 'priazovskoe', 'stepanovka', 'stepanovka-pervaya'] },
-    { key: 'primorsky', name: 'Приморский район', cities: ['zelenovka', 'komarovka', 'yuryevka'] },
-    { key: 'chernigovsky', name: 'Черниговский район', cities: ['chernigovka'] }
-  ];
+  const additionalDirectory = {};
+  const additionalCities = {};
+  const districtMap = new Map();
+  directoryAgents.filter((agent) => !agent.isPrimaryCity).forEach((agent) => {
+    if (!additionalDirectory[agent.localitySlug]) {
+      const localityAgents = agentsByLocality.get(agent.localitySlug) || [];
+      const points = groupAgentPoints(localityAgents);
+      additionalDirectory[agent.localitySlug] = [agent.localityName, points];
+      additionalCities[agent.localitySlug] = {
+        name: agent.localityName,
+        agents: localityAgents.length,
+        points: points.length
+      };
+    }
+    const districtKey = agent.districtSlug || 'other';
+    if (!districtMap.has(districtKey)) {
+      districtMap.set(districtKey, {
+        key: districtKey,
+        name: agent.districtName || 'Другие населённые пункты',
+        cities: []
+      });
+    }
+    const district = districtMap.get(districtKey);
+    if (!district.cities.includes(agent.localitySlug)) district.cities.push(agent.localitySlug);
+  });
+  const additionalDistricts = [...districtMap.values()];
 
   const pointLabel = (count) => {
     const mod100 = count % 100;
@@ -125,7 +164,7 @@
       const title = document.createElement('span');
       const strong = document.createElement('strong');
       strong.textContent = district.name;
-      const pointCount = cityKeys.reduce((sum, key) => sum + additionalCities[key].agents, 0);
+      const pointCount = cityKeys.reduce((sum, key) => sum + additionalCities[key].points, 0);
       const count = document.createElement('small');
       count.textContent = `${cityKeys.length} ${cityKeys.length === 1 ? 'населённый пункт' : cityKeys.length >= 2 && cityKeys.length <= 4 ? 'населённых пункта' : 'населённых пунктов'} · ${pointLabel(pointCount)}`;
       title.append(strong, count);
@@ -668,7 +707,7 @@
     if (link) link.setAttribute('aria-label', `${city.name}, ${label}`);
   });
 
-  const totalAgents = Object.values(cities).reduce((sum, city) => sum + city.agents, 0);
+  const totalAgents = directoryAgents.length;
   const totalAgentsValue = document.querySelector('#total-agents');
   const totalAgentsLabel = document.querySelector('#total-agents-label');
   if (totalAgentsValue) totalAgentsValue.textContent = totalAgents;

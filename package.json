@@ -13,6 +13,7 @@
     "db:migrate": "node server/migrate.js",
     "agent:create": "node server/create-agent.js",
     "agent:disable": "node server/disable-agent.js",
+    "admin:create": "node server/create-admin.js",
     "test": "node --test test/*.test.js",
     "test:smoke": "node scripts/smoke-test.js"
   },
