@@ -455,6 +455,129 @@ export const createAdminRouter = ({
     }
   });
 
+  router.patch('/agents/:id', requireCsrf, async (request, response, next) => {
+    if (!isUuid(request.params.id)) return response.status(400).json({ error: 'Некорректный агент.' });
+
+    const localitySlug = String(request.body.localitySlug || '').trim().toLowerCase();
+    const displayName = cleanText(request.body.displayName, 160);
+    const address = cleanText(request.body.address, 240);
+    const phones = normalizePhoneList(request.body.phones?.length ? request.body.phones : request.body.phone);
+    const note = String(request.body.note || '').trim().replace(/\s+/g, ' ') || null;
+    const rawMapUrl = String(request.body.mapUrl || '').trim();
+    const mapUrl = cleanMapUrl(rawMapUrl);
+
+    if (!/^[a-z0-9-]{2,80}$/.test(localitySlug) || !displayName || !address
+      || !phones.length || phones.length > 20
+      || phones.some((phone) => phone.length < 10 || phone.length > 15)
+      || (note && note.length > 240) || (rawMapUrl && !mapUrl)) {
+      return response.status(400).json({ error: 'Проверьте имя, адрес, телефоны и ссылку на карту.' });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const currentResult = await client.query(
+        `SELECT id, city_slug, sort_order
+         FROM agents
+         WHERE id = $1 AND merged_into_agent_id IS NULL
+         FOR UPDATE`,
+        [request.params.id]
+      );
+      if (!currentResult.rowCount) {
+        await client.query('ROLLBACK');
+        return response.status(404).json({ error: 'Агент не найден.' });
+      }
+
+      const localityResult = await client.query(
+        `SELECT locality_name, district_slug, district_name, is_primary_city,
+                district_order, locality_order
+         FROM agents
+         WHERE city_slug = $1 AND merged_into_agent_id IS NULL
+         ORDER BY is_active DESC, sort_order NULLS LAST
+         LIMIT 1`,
+        [localitySlug]
+      );
+      if (!localityResult.rowCount) {
+        await client.query('ROLLBACK');
+        return response.status(400).json({ error: 'Населённый пункт не найден в справочнике.' });
+      }
+
+      const addressKey = normalizeAddress(address);
+      const duplicate = addressKey === 'безофиса'
+        ? await client.query(
+          `SELECT a.id
+           FROM agents a
+           JOIN agent_phones ap ON ap.agent_id = a.id
+           WHERE a.city_slug = $1 AND a.address_key = $2
+             AND a.merged_into_agent_id IS NULL AND a.id <> $3
+             AND ap.phone = ANY($4::VARCHAR[])
+           LIMIT 1`,
+          [localitySlug, addressKey, request.params.id, phones]
+        )
+        : await client.query(
+          `SELECT id
+           FROM agents
+           WHERE city_slug = $1 AND address_key = $2
+             AND merged_into_agent_id IS NULL AND id <> $3
+           LIMIT 1`,
+          [localitySlug, addressKey, request.params.id]
+        );
+      if (duplicate.rowCount) {
+        await client.query('ROLLBACK');
+        return response.status(409).json({
+          error: addressKey === 'безофиса'
+            ? 'Другой агент «Без офиса» уже использует один из этих телефонов.'
+            : 'Другой агент с таким адресом уже существует в выбранном населённом пункте.'
+        });
+      }
+
+      const current = currentResult.rows[0];
+      let sortOrder = current.sort_order;
+      if (current.city_slug !== localitySlug) {
+        const orderResult = await client.query(
+          'SELECT COALESCE(MAX(sort_order), -100) + 100 AS next_order FROM agents WHERE city_slug = $1',
+          [localitySlug]
+        );
+        sortOrder = orderResult.rows[0].next_order;
+      }
+
+      const metadata = localityResult.rows[0];
+      await client.query(
+        `UPDATE agents
+         SET display_name = $1, city_slug = $2, locality_name = $3,
+             district_slug = $4, district_name = $5, is_primary_city = $6,
+             district_order = $7, locality_order = $8, sort_order = $9,
+             address = $10, address_key = $11, phone = $12,
+             note = $13, map_url = $14, updated_at = NOW()
+         WHERE id = $15`,
+        [
+          displayName, localitySlug, metadata.locality_name,
+          metadata.district_slug, metadata.district_name, metadata.is_primary_city,
+          metadata.district_order, metadata.locality_order, sortOrder,
+          address, addressKey, phones[0], note, mapUrl, request.params.id
+        ]
+      );
+      await client.query('DELETE FROM agent_phones WHERE agent_id = $1', [request.params.id]);
+      for (let phoneIndex = 0; phoneIndex < phones.length; phoneIndex += 1) {
+        await client.query(
+          `INSERT INTO agent_phones (agent_id, phone, sort_order)
+           VALUES ($1, $2, $3)`,
+          [request.params.id, phones[phoneIndex], phoneIndex]
+        );
+      }
+      await client.query('COMMIT');
+      return response.json({ id: request.params.id, message: 'Данные агента обновлены.' });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      if (error.code === '23505') {
+        return response.status(409).json({ error: 'Адрес, телефон или другие данные уже используются другим агентом.' });
+      }
+      return next(error);
+    } finally {
+      client.release();
+    }
+  });
+
   router.patch('/agents/:id/cabinet', requireCsrf, async (request, response, next) => {
     try {
       if (!isUuid(request.params.id)) return response.status(400).json({ error: 'Некорректный агент.' });

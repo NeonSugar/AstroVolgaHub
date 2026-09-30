@@ -150,9 +150,9 @@
     <button class="cabinet-status-backdrop" type="button" data-agent-modal-close aria-label="Закрыть окно"></button>
     <form class="cabinet-status-dialog admin-agent-dialog" data-agent-form role="dialog" aria-modal="true" aria-labelledby="admin-agent-title" novalidate>
       <button class="cabinet-status-close" type="button" data-agent-modal-close aria-label="Закрыть">×</button>
-      <p class="eyebrow eyebrow-blue"><span></span> Новый представитель</p>
-      <h2 id="admin-agent-title">Добавить агента</h2>
-      <p class="cabinet-status-description">После сохранения агент сразу появится на соответствующей странице сайта.</p>
+      <p class="eyebrow eyebrow-blue" data-agent-modal-eyebrow><span></span> Новый представитель</p>
+      <h2 id="admin-agent-title" data-agent-modal-title>Добавить агента</h2>
+      <p class="cabinet-status-description" data-agent-modal-description>После сохранения агент сразу появится на соответствующей странице сайта.</p>
       <div class="admin-agent-form-grid">
         <label class="is-wide"><span>Населённый пункт</span><select name="localitySlug" required></select></label>
         <label class="is-wide"><span>Имя агента</span><input name="displayName" type="text" maxlength="160" required></label>
@@ -173,7 +173,7 @@
           <div class="admin-credential-note"><span>Данные создаются автоматически. Скопируйте их и передайте агенту.</span><button type="button" data-copy-new-agent-credentials>Скопировать</button></div>
         </div>
       </div>
-      <div class="cabinet-status-actions"><button class="button button-secondary" type="button" data-agent-modal-close>Отмена</button><button class="button button-primary" type="submit">Добавить</button></div>
+      <div class="cabinet-status-actions"><button class="button button-secondary" type="button" data-agent-modal-close>Отмена</button><button class="button button-primary" type="submit" data-agent-submit>Добавить</button></div>
       <p class="cabinet-form-status" data-agent-form-status role="status"></p>
     </form>
   </div>
@@ -212,6 +212,6 @@
 
   <div class="admin-toast" data-toast role="status" aria-live="polite" hidden></div>
 
-  <script src="admin.js?v=20260930-2"></script>
+  <script src="admin.js?v=20260930-3"></script>
 </body>
 </html>

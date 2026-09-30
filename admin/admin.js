@@ -39,10 +39,15 @@
   const agentModal = document.querySelector('[data-agent-modal]');
   const agentForm = document.querySelector('[data-agent-form]');
   const agentFormStatus = document.querySelector('[data-agent-form-status]');
+  const agentModalEyebrow = document.querySelector('[data-agent-modal-eyebrow]');
+  const agentModalTitle = document.querySelector('[data-agent-modal-title]');
+  const agentModalDescription = document.querySelector('[data-agent-modal-description]');
+  const agentSubmitButton = document.querySelector('[data-agent-submit]');
   const agentPhoneList = document.querySelector('[data-agent-phone-list]');
   const addAgentPhoneButton = document.querySelector('[data-add-agent-phone]');
   const cabinetToggle = agentForm?.elements.cabinetEnabled;
   const cabinetFields = document.querySelector('[data-cabinet-fields]');
+  const cabinetToggleField = cabinetToggle?.closest('.admin-cabinet-toggle');
   const cabinetModal = document.querySelector('[data-cabinet-modal]');
   const cabinetForm = document.querySelector('[data-cabinet-form]');
   const cabinetFormStatus = document.querySelector('[data-cabinet-form-status]');
@@ -65,6 +70,7 @@
   let requestPage = 1;
   let agentPage = 1;
   let activeSection = 'requests';
+  let selectedEditingAgent = null;
   let selectedCabinetAgent = null;
   let selectedTransferRequest = null;
   let toastTimer;
@@ -92,7 +98,7 @@
       remove.hidden = rows.length === 1;
     });
   };
-  const addAgentPhoneRow = (value = '') => {
+  const addAgentPhoneRow = (value = '', focus = true) => {
     const row = document.createElement('label');
     row.className = 'admin-phone-row';
     const input = document.createElement('input');
@@ -110,7 +116,7 @@
     row.append(input, remove);
     agentPhoneList.append(row);
     syncAgentPhoneRows();
-    input.focus();
+    if (focus) input.focus();
   };
   const resetAgentPhoneRows = () => {
     const inputs = getAgentPhoneInputs();
@@ -586,6 +592,10 @@
 
     const actions = document.createElement('div');
     actions.className = 'admin-agent-actions';
+    const editButton = document.createElement('button');
+    editButton.type = 'button';
+    editButton.textContent = 'Редактировать';
+    editButton.addEventListener('click', () => openAgentModal(agent));
     const cabinetButton = document.createElement('button');
     cabinetButton.type = 'button';
     cabinetButton.textContent = agent.hasCabinet ? 'Настроить ЛК' : 'Создать ЛК';
@@ -607,7 +617,7 @@
     stateButton.className = agent.isActive ? 'is-danger' : 'is-restore';
     stateButton.textContent = agent.isActive ? 'Убрать агента' : 'Восстановить';
     stateButton.addEventListener('click', () => changeAgentState(agent));
-    actions.append(cabinetButton, requestsButton, stateButton);
+    actions.append(editButton, cabinetButton, requestsButton, stateButton);
     article.append(identity, access, stats, actions);
     return article;
   };
@@ -684,19 +694,45 @@
     }
   };
 
-  const openAgentModal = () => {
+  const openAgentModal = (agent = null) => {
+    selectedEditingAgent = agent;
     agentForm.reset();
     resetAgentPhoneRows();
     agentForm.elements.login.dataset.generated = 'false';
     agentForm.elements.password.type = 'password';
+    agentForm.elements.login.required = false;
+    agentForm.elements.password.required = false;
+    if (cabinetToggleField) cabinetToggleField.hidden = Boolean(agent);
     cabinetFields.hidden = true;
+    agentModalEyebrow.innerHTML = agent
+      ? '<span></span> Редактирование агента'
+      : '<span></span> Новый представитель';
+    agentModalTitle.textContent = agent ? 'Редактировать агента' : 'Добавить агента';
+    agentModalDescription.textContent = agent
+      ? 'Изменения появятся на сайте сразу после сохранения.'
+      : 'После сохранения агент сразу появится на соответствующей странице сайта.';
+    agentSubmitButton.textContent = agent ? 'Сохранить изменения' : 'Добавить';
+    if (agent) {
+      agentForm.elements.localitySlug.value = agent.localitySlug;
+      agentForm.elements.displayName.value = agent.displayName;
+      agentForm.elements.address.value = agent.address;
+      agentForm.elements.mapUrl.value = agent.mapUrl || '';
+      agentForm.elements.note.value = agent.note || '';
+      const phones = agent.phones?.length ? agent.phones : [agent.phone].filter(Boolean);
+      const firstPhone = getAgentPhoneInputs()[0];
+      if (firstPhone) firstPhone.value = formatPhone(phones[0] || '');
+      phones.slice(1).forEach((phone) => addAgentPhoneRow(formatPhone(phone), false));
+    }
     agentFormStatus.textContent = '';
     agentModal.hidden = false;
     document.body.classList.add('has-cabinet-modal');
-    window.requestAnimationFrame(() => agentForm.elements.localitySlug.focus());
+    window.requestAnimationFrame(() => {
+      (agent ? agentForm.elements.displayName : agentForm.elements.localitySlug).focus();
+    });
   };
   const closeAgentModal = () => {
     agentModal.hidden = true;
+    selectedEditingAgent = null;
     document.body.classList.remove('has-cabinet-modal');
   };
 
@@ -855,7 +891,7 @@
     renderRequests();
     renderAgents();
   });
-  document.querySelector('[data-add-agent]').addEventListener('click', openAgentModal);
+  document.querySelector('[data-add-agent]').addEventListener('click', () => openAgentModal());
   document.querySelectorAll('[data-agent-modal-close]').forEach((button) => button.addEventListener('click', closeAgentModal));
   document.querySelectorAll('[data-cabinet-modal-close]').forEach((button) => button.addEventListener('click', closeCabinetModal));
   document.querySelectorAll('[data-transfer-modal-close]').forEach((button) => button.addEventListener('click', closeTransferModal));
@@ -926,21 +962,35 @@
     event.preventDefault();
     if (!agentForm.reportValidity()) return;
     const formData = new FormData(agentForm);
+    const editingAgent = selectedEditingAgent;
     const submit = agentForm.querySelector('button[type="submit"]');
     submit.disabled = true;
     agentFormStatus.textContent = 'Сохраняем…';
     try {
-      await apiRequest('/api/admin/agents', {
-        method: 'POST',
-        body: JSON.stringify({
-          localitySlug: formData.get('localitySlug'), displayName: formData.get('displayName'),
-          address: formData.get('address'), phones: formData.getAll('phones'), note: formData.get('note'),
-          mapUrl: formData.get('mapUrl'), cabinetEnabled: formData.get('cabinetEnabled') === 'on',
-          login: formData.get('login'), password: formData.get('password')
-        })
-      });
+      const payload = {
+        localitySlug: formData.get('localitySlug'),
+        displayName: formData.get('displayName'),
+        address: formData.get('address'),
+        phones: formData.getAll('phones'),
+        note: formData.get('note'),
+        mapUrl: formData.get('mapUrl')
+      };
+      const data = await apiRequest(
+        editingAgent ? `/api/admin/agents/${editingAgent.id}` : '/api/admin/agents',
+        {
+          method: editingAgent ? 'PATCH' : 'POST',
+          body: JSON.stringify(editingAgent ? payload : {
+            ...payload,
+            cabinetEnabled: formData.get('cabinetEnabled') === 'on',
+            login: formData.get('login'),
+            password: formData.get('password')
+          })
+        }
+      );
       closeAgentModal();
-      showToast('Агент добавлен и уже доступен в каталоге.');
+      showToast(data.message || (editingAgent
+        ? 'Данные агента обновлены.'
+        : 'Агент добавлен и уже доступен в каталоге.'));
       await loadAll();
     } catch (error) {
       agentFormStatus.textContent = error.message;
