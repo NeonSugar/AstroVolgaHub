@@ -313,11 +313,19 @@
           <button class="button button-primary" type="submit">Отправить заявку</button>
           <p class="callback-status" data-callback-status role="status"></p>
         </form>
+        <div class="callback-success" data-callback-success hidden role="status" aria-live="polite">
+          <span class="callback-success-icon" aria-hidden="true">✓</span>
+          <h3>Заявка отправлена</h3>
+          <p>Спасибо! Агент получил вашу заявку и свяжется с вами в ближайшее время.</p>
+          <button class="button button-primary" type="button" data-callback-success-close>Готово</button>
+        </div>
       </div>`;
     document.body.append(modal);
 
     const form = modal.querySelector('[data-callback-form]');
     const status = modal.querySelector('[data-callback-status]');
+    const success = modal.querySelector('[data-callback-success]');
+    const successCloseButton = modal.querySelector('[data-callback-success-close]');
     const agentLabelElement = modal.querySelector('[data-callback-agent]');
     const submitButton = form.querySelector('button[type="submit"]');
     let selectedAgent = null;
@@ -325,10 +333,14 @@
 
     const closeModal = () => {
       modal.hidden = true;
+      modal.classList.remove('has-success');
       document.body.classList.remove('callback-modal-open');
       selectedAgent = null;
       form.reset();
+      form.hidden = false;
+      success.hidden = true;
       status.textContent = '';
+      status.classList.remove('is-success');
       submitButton.disabled = false;
       previouslyFocused?.focus();
     };
@@ -336,6 +348,10 @@
     const openModal = (agent, trigger) => {
       selectedAgent = agent;
       previouslyFocused = trigger;
+      modal.classList.remove('has-success');
+      form.hidden = false;
+      success.hidden = true;
+      status.textContent = '';
       agentLabelElement.textContent = `${agent.displayName} · ${agent.address}`;
       modal.hidden = false;
       document.body.classList.add('callback-modal-open');
@@ -343,6 +359,7 @@
     };
 
     modal.querySelectorAll('[data-callback-close]').forEach((button) => button.addEventListener('click', closeModal));
+    successCloseButton.addEventListener('click', closeModal);
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !modal.hidden) closeModal();
     });
@@ -399,8 +416,11 @@
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || 'Не удалось отправить заявку.');
         form.reset();
-        status.classList.add('is-success');
-        status.textContent = 'Заявка отправлена. Агент свяжется с вами.';
+        status.textContent = '';
+        form.hidden = true;
+        success.hidden = false;
+        modal.classList.add('has-success');
+        window.requestAnimationFrame(() => successCloseButton.focus());
       } catch (error) {
         status.textContent = error.message;
       } finally {

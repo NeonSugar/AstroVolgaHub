@@ -79,12 +79,13 @@
 .callback-close{position:absolute;right:18px;top:18px;width:40px;height:40px;border:0;border-radius:50%;background:var(--sky);color:var(--blue);font-size:27px;line-height:1;cursor:pointer}
 .callback-dialog h2{margin:0;font-size:clamp(30px,5vw,43px);line-height:1.08;letter-spacing:-.035em}
 .callback-agent{margin:13px 44px 24px 0;color:var(--muted);font-size:14px}
-.callback-form{display:grid;gap:17px}.callback-form>label:not(.callback-consent){display:grid;gap:7px;color:#536477;font-size:13px;font-weight:600}
+.callback-form{display:grid;gap:17px}.callback-form[hidden]{display:none}.callback-form>label:not(.callback-consent){display:grid;gap:7px;color:#536477;font-size:13px;font-weight:600}
 .callback-form input[type="text"],.callback-form input[type="tel"]{height:54px;width:100%;padding:0 16px;border:1px solid var(--line);border-radius:14px;background:#f8fbfd;color:var(--ink);font:inherit;outline:none;transition:border-color .2s,box-shadow .2s,background .2s}
 .callback-form input[type="text"]:focus,.callback-form input[type="tel"]:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 4px rgba(0,103,177,.1)}
 .callback-consent{display:grid;grid-template-columns:20px 1fr;align-items:start;gap:10px;color:#67788a;font-size:12px;line-height:1.5}.callback-consent input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--blue)}.callback-consent a{color:var(--blue);text-decoration:underline}
 .callback-form .button{width:100%}.callback-form .button:disabled{opacity:.65;cursor:wait;transform:none}
 .callback-status{min-height:1.5em;margin:0;color:var(--red);font-size:13px}.callback-status.is-success{color:#1c7a4b}
+.callback-success[hidden]{display:none}.callback-success{min-height:360px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:18px 12px 4px;text-align:center}.callback-success-icon{width:92px;height:92px;display:grid;place-items:center;border-radius:50%;background:#e7f5ee;color:#218457;font-size:48px;font-weight:800;box-shadow:0 0 0 12px rgba(33,132,87,.08)}.callback-success h3{margin:34px 0 12px;color:var(--ink);font-size:clamp(31px,6vw,44px);line-height:1.08;letter-spacing:-.035em}.callback-success p{max-width:390px;margin:0;color:var(--muted);font-size:16px;line-height:1.55}.callback-success .button{width:100%;margin-top:30px}.callback-modal.has-success .callback-dialog>.eyebrow,.callback-modal.has-success .callback-dialog>h2,.callback-modal.has-success .callback-agent{display:none}
 body.callback-modal-open{overflow:hidden}
 @keyframes callback-dialog-in{from{opacity:0;translate:0 14px;scale:.98}to{opacity:1;translate:0 0;scale:1}}
 

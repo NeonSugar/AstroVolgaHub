@@ -17,11 +17,13 @@
     const points = new Map();
     agents.forEach((agent) => {
       const pointKey = agent.addressKey === 'безофиса' ? `безофиса:${agent.id}` : agent.addressKey;
-      if (!points.has(pointKey)) points.set(pointKey, [agent.address, []]);
-      const phones = points.get(pointKey)[1];
+      if (!points.has(pointKey)) points.set(pointKey, [agent.address, [], []]);
+      const point = points.get(pointKey);
+      const phones = point[1];
       (agent.phones?.length ? agent.phones : [agent.phone]).filter(Boolean).forEach((phone) => {
         if (!phones.includes(phone)) phones.push(phone);
       });
+      if (!point[2].includes(agent.id)) point[2].push(agent.id);
     });
     return [...points.values()];
   };
@@ -93,9 +95,7 @@
     list.replaceChildren();
 
     const createCityAccordion = (key, [name, sourcePoints]) => {
-      const points = sourcePoints.flatMap(([address, phones]) => address === 'Без офиса'
-        ? phones.map((phone) => [address, [phone]])
-        : [[address, phones]]);
+      const points = sourcePoints;
       const details = document.createElement('details');
       details.className = 'additional-city';
       details.id = `additional-${key}`;
@@ -118,7 +118,7 @@
       content.className = 'additional-city-content';
       const grid = document.createElement('div');
       grid.className = 'additional-agent-grid';
-      points.forEach(([address, phones], index) => {
+      points.forEach(([address, phones, agentIds], index) => {
         const card = document.createElement('article');
         card.className = 'additional-agent-card';
         const number = document.createElement('span');
@@ -143,6 +143,15 @@
           phoneList.append(link);
         });
         card.append(phoneList);
+        const cabinetAgent = directoryAgents.find((agent) => agentIds.includes(agent.id) && agent.hasCabinet);
+        if (cabinetAgent) {
+          const callbackButton = document.createElement('button');
+          callbackButton.className = 'additional-agent-callback';
+          callbackButton.type = 'button';
+          callbackButton.dataset.callbackAgentId = cabinetAgent.id;
+          callbackButton.textContent = 'Оставить заявку';
+          card.append(callbackButton);
+        }
         grid.append(card);
       });
       content.append(grid);
@@ -205,6 +214,135 @@
   };
 
   renderAdditionalCities();
+
+  const setupAdditionalCallbackRequests = () => {
+    const buttons = [...document.querySelectorAll('[data-callback-agent-id]')];
+    if (!buttons.length) return;
+
+    const modal = document.createElement('div');
+    modal.className = 'callback-modal';
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="callback-modal-backdrop" data-callback-close></div>
+      <div class="callback-dialog" role="dialog" aria-modal="true" aria-labelledby="hub-callback-title">
+        <button class="callback-close" type="button" aria-label="Закрыть форму" data-callback-close>×</button>
+        <p class="eyebrow eyebrow-blue"><span></span> Связаться с агентом</p>
+        <h2 id="hub-callback-title">Оставить заявку</h2>
+        <p class="callback-agent" data-callback-agent></p>
+        <form class="callback-form" data-callback-form novalidate>
+          <label><span>Ваше имя</span><input name="name" type="text" autocomplete="name" minlength="2" maxlength="80" required></label>
+          <label><span>Номер телефона</span><input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+7 900 000-00-00" maxlength="24" required></label>
+          <label class="callback-consent"><input name="consent" type="checkbox" required><span>Я соглашаюсь на обработку персональных данных согласно <a href="https://astrovolga.ru/upload/medialibrary/86b/bzomnwfohjp5w7qe4ob6o2xubyf0gc7t.pdf" target="_blank" rel="noopener">политике конфиденциальности</a>.</span></label>
+          <button class="button button-primary" type="submit">Отправить заявку</button>
+          <p class="callback-status" data-callback-status role="status"></p>
+        </form>
+        <div class="callback-success" data-callback-success hidden role="status" aria-live="polite">
+          <span class="callback-success-icon" aria-hidden="true">✓</span>
+          <h3>Заявка отправлена</h3>
+          <p>Спасибо! Агент получил вашу заявку и свяжется с вами в ближайшее время.</p>
+          <button class="button button-primary" type="button" data-callback-success-close>Готово</button>
+        </div>
+      </div>`;
+    document.body.append(modal);
+
+    const form = modal.querySelector('[data-callback-form]');
+    const status = modal.querySelector('[data-callback-status]');
+    const success = modal.querySelector('[data-callback-success]');
+    const successCloseButton = modal.querySelector('[data-callback-success-close]');
+    const agentLabelElement = modal.querySelector('[data-callback-agent]');
+    const submitButton = form.querySelector('button[type="submit"]');
+    let selectedAgent = null;
+    let previouslyFocused = null;
+
+    const closeModal = () => {
+      modal.hidden = true;
+      modal.classList.remove('has-success');
+      document.body.classList.remove('callback-modal-open');
+      selectedAgent = null;
+      form.reset();
+      form.hidden = false;
+      success.hidden = true;
+      status.textContent = '';
+      status.classList.remove('is-success');
+      submitButton.disabled = false;
+      previouslyFocused?.focus();
+    };
+
+    const openModal = (agent, trigger) => {
+      selectedAgent = agent;
+      previouslyFocused = trigger;
+      modal.classList.remove('has-success');
+      form.hidden = false;
+      success.hidden = true;
+      status.textContent = '';
+      agentLabelElement.textContent = `${agent.localityName} · ${agent.address}`;
+      modal.hidden = false;
+      document.body.classList.add('callback-modal-open');
+      window.requestAnimationFrame(() => form.elements.name.focus());
+    };
+
+    buttons.forEach((button) => {
+      const agent = directoryAgents.find((item) => item.id === button.dataset.callbackAgentId && item.hasCabinet);
+      if (agent) button.addEventListener('click', () => openModal(agent, button));
+    });
+    modal.querySelectorAll('[data-callback-close]').forEach((button) => button.addEventListener('click', closeModal));
+    successCloseButton.addEventListener('click', closeModal);
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !modal.hidden) closeModal();
+    });
+
+    const getCsrfToken = async () => {
+      const response = await fetch('/api/csrf', { credentials: 'same-origin' });
+      if (!response.ok) throw new Error('Не удалось подготовить форму.');
+      return (await response.json()).token;
+    };
+    const sendRequest = async (payload, csrfToken) => fetch('/api/callback-requests', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify(payload)
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!selectedAgent || !form.reportValidity()) return;
+      submitButton.disabled = true;
+      status.classList.remove('is-success');
+      status.textContent = 'Отправляем заявку…';
+      const formData = new FormData(form);
+      const payload = {
+        agentId: selectedAgent.id,
+        name: formData.get('name'),
+        phone: formData.get('phone'),
+        consent: formData.get('consent') === 'on',
+        sourcePath: location.pathname
+      };
+
+      try {
+        let csrfToken = await getCsrfToken();
+        let response = await sendRequest(payload, csrfToken);
+        if (response.status === 403) {
+          csrfToken = await getCsrfToken();
+          response = await sendRequest(payload, csrfToken);
+        }
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Не удалось отправить заявку.');
+        form.reset();
+        status.textContent = '';
+        form.hidden = true;
+        success.hidden = false;
+        modal.classList.add('has-success');
+        trackGoal('hub_callback_submit', { locality: selectedAgent.localitySlug });
+        window.requestAnimationFrame(() => successCloseButton.focus());
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+  };
+
+  setupAdditionalCallbackRequests();
 
   const agentLabel = (count) => {
     if (!Number.isFinite(count)) return 'агенты рядом';
