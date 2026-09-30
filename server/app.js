@@ -394,6 +394,9 @@ export const createApp = ({ pool, config }) => {
 
   app.use('/assets', express.static(join(projectRoot, 'assets'), { dotfiles: 'deny', maxAge: production ? '7d' : 0 }));
   cityDirectories.forEach((city) => {
+    app.get(`/${city}/yandex-metrika.js`, (_request, response) => {
+      response.sendFile(join(projectRoot, city, 'yandex-metrika.js'));
+    });
     app.use(`/${city}`, express.static(join(projectRoot, city), { dotfiles: 'deny', maxAge: production ? '1h' : 0 }));
   });
   app.use('/agent', express.static(join(projectRoot, 'agent'), { dotfiles: 'deny', maxAge: production ? '1h' : 0 }));
@@ -401,10 +404,6 @@ export const createApp = ({ pool, config }) => {
   app.get(['/styles.css', '/script.js', '/yandex-metrika.js'], (request, response) => {
     response.sendFile(join(projectRoot, request.path.slice(1)));
   });
-
-  // app.get(['/berdyansk/yandex-metrika.js', '/energodar/yandex-metrika.js', '/kamenka/yandex-metrika.js', '/melitopol/yandex-metrika.js', '/primorsk/yandex-metrika.js', '/tokmak/yandex-metrika.js', '/vasilevka/yandex-metrika.js', '/veseloe/yandex-metrika.js', '/znamenka/yandex-metrika.js'], (request, response) => {
-  //   response.sendFile(join(projectRoot, request.path.slice(1)));
-  // });
 
   app.get('/yandex_5feb11370c3fa519.html', (_request, response) => {
     response.sendFile(join(projectRoot, 'yandex_5feb11370c3fa519.html'));
