@@ -9,7 +9,7 @@
   <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../styles.css?v=20260909-1">
   <link rel="stylesheet" href="../agent/agent.css?v=20260909-8">
-  <link rel="stylesheet" href="admin.css?v=20260930-1">
+  <link rel="stylesheet" href="admin.css?v=20260930-3">
 </head>
 <body class="cabinet-page admin-page">
   <header class="cabinet-header">
@@ -157,7 +157,13 @@
         <label class="is-wide"><span>Населённый пункт</span><select name="localitySlug" required></select></label>
         <label class="is-wide"><span>Имя агента</span><input name="displayName" type="text" maxlength="160" required></label>
         <label class="is-wide"><span>Адрес</span><input name="address" type="text" maxlength="240" required></label>
-        <label><span>Телефон</span><input name="phone" type="tel" placeholder="+7 900 000-00-00" maxlength="24" required></label>
+        <div class="admin-phone-field is-wide">
+          <span>Контактные телефоны</span>
+          <div class="admin-phone-list" data-agent-phone-list>
+            <label class="admin-phone-row"><input name="phones" type="tel" placeholder="+7 900 000-00-00" maxlength="24" required><button type="button" data-remove-agent-phone aria-label="Удалить телефон" hidden>×</button></label>
+          </div>
+          <button class="admin-add-phone" type="button" data-add-agent-phone>+ Добавить ещё телефон</button>
+        </div>
         <label><span>Ссылка на карту</span><input name="mapUrl" type="url" placeholder="https://yandex.ru/maps/…" maxlength="500"></label>
         <label class="is-wide"><span>Примечание</span><input name="note" type="text" maxlength="240" placeholder="Необязательно"></label>
         <label class="admin-cabinet-toggle is-wide"><input name="cabinetEnabled" type="checkbox"><span>Создать личный кабинет</span></label>
@@ -189,8 +195,23 @@
     </form>
   </div>
 
+  <div class="cabinet-status-modal" data-transfer-modal hidden>
+    <button class="cabinet-status-backdrop" type="button" data-transfer-modal-close aria-label="Закрыть окно"></button>
+    <form class="cabinet-status-dialog admin-transfer-dialog" data-transfer-form role="dialog" aria-modal="true" aria-labelledby="admin-transfer-title" novalidate>
+      <button class="cabinet-status-close" type="button" data-transfer-modal-close aria-label="Закрыть">×</button>
+      <p class="eyebrow eyebrow-blue"><span></span> Переназначение заявки</p>
+      <h2 id="admin-transfer-title">Передать заявку</h2>
+      <p class="cabinet-status-description" data-transfer-client></p>
+      <div class="admin-transfer-current"><span>Текущий агент</span><strong data-transfer-current-agent></strong></div>
+      <label class="admin-transfer-field"><span>Новый агент</span><select name="agentId" required></select></label>
+      <p class="admin-transfer-note">Доступны только активные агенты с личным кабинетом из того же населённого пункта.</p>
+      <div class="cabinet-status-actions"><button class="button button-secondary" type="button" data-transfer-modal-close>Отмена</button><button class="button button-primary" type="submit">Передать</button></div>
+      <p class="cabinet-form-status" data-transfer-form-status role="status"></p>
+    </form>
+  </div>
+
   <div class="admin-toast" data-toast role="status" aria-live="polite" hidden></div>
 
-  <script src="admin.js?v=20260929-3"></script>
+  <script src="admin.js?v=20260930-2"></script>
 </body>
 </html>

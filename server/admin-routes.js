@@ -25,6 +25,11 @@ const cleanMapUrl = (value) => {
   }
 };
 
+const normalizePhoneList = (value) => {
+  const source = Array.isArray(value) ? value : [value];
+  return [...new Set(source.map(normalizePhone).filter(Boolean))];
+};
+
 const requestDto = (row) => ({
   id: row.id,
   customerName: row.customer_name,
@@ -40,7 +45,8 @@ const requestDto = (row) => ({
     localitySlug: row.city_slug,
     localityName: row.locality_name || row.city_slug,
     address: row.agent_address,
-    phone: row.agent_phone,
+    phone: row.agent_phones?.[0] || row.agent_phone,
+    phones: row.agent_phones?.length ? row.agent_phones : [row.agent_phone].filter(Boolean),
     isActive: Boolean(row.agent_active)
   }
 });
@@ -52,7 +58,8 @@ const agentDto = (row) => ({
   localityName: row.locality_name || row.city_slug,
   districtName: row.district_name,
   address: row.address,
-  phone: row.phone,
+  phone: row.phones?.[0] || row.phone,
+  phones: row.phones?.length ? row.phones : [row.phone].filter(Boolean),
   note: row.note,
   mapUrl: row.map_url,
   login: row.login,
@@ -159,6 +166,7 @@ export const createAdminRouter = ({
                   COUNT(cr.id) FILTER (WHERE cr.status = 'rejected')::INTEGER AS rejected
            FROM agents a
            LEFT JOIN callback_requests cr ON cr.agent_id = a.id
+           WHERE a.merged_into_agent_id IS NULL
            GROUP BY a.city_slug
            ORDER BY MAX(a.is_primary_city::INTEGER) DESC,
                     MIN(a.district_order) NULLS FIRST,
@@ -169,7 +177,8 @@ export const createAdminRouter = ({
           `SELECT COUNT(*) FILTER (WHERE is_active = TRUE)::INTEGER AS active,
                   COUNT(*) FILTER (WHERE is_active = TRUE AND cabinet_enabled = TRUE)::INTEGER AS cabinets,
                   COUNT(*) FILTER (WHERE is_active = FALSE)::INTEGER AS inactive
-           FROM agents`
+           FROM agents
+           WHERE merged_into_agent_id IS NULL`
         )
       ]);
       return response.json({
@@ -198,6 +207,14 @@ export const createAdminRouter = ({
       const result = await pool.query(
         `SELECT a.id, a.login, a.display_name, a.city_slug, a.locality_name, a.district_name,
                 a.address, a.phone, a.note, a.map_url, a.cabinet_enabled, a.is_active,
+                COALESCE(
+                  NULLIF(ARRAY(
+                    SELECT ap.phone FROM agent_phones ap
+                    WHERE ap.agent_id = a.id
+                    ORDER BY ap.sort_order, ap.created_at, ap.phone
+                  ), ARRAY[]::VARCHAR[]),
+                  ARRAY[a.phone]
+                ) AS phones,
                 COUNT(cr.id)::INTEGER AS requests_all,
                 COUNT(cr.id) FILTER (WHERE cr.status = 'new')::INTEGER AS requests_new,
                 COUNT(cr.id) FILTER (WHERE cr.status = 'in_progress')::INTEGER AS requests_in_progress,
@@ -205,6 +222,7 @@ export const createAdminRouter = ({
                 COUNT(cr.id) FILTER (WHERE cr.status = 'rejected')::INTEGER AS requests_rejected
          FROM agents a
          LEFT JOIN callback_requests cr ON cr.agent_id = a.id
+         WHERE a.merged_into_agent_id IS NULL
          GROUP BY a.id
          ORDER BY a.is_active DESC, a.is_primary_city DESC NULLS LAST,
                   a.district_order NULLS FIRST, a.locality_order NULLS LAST,
@@ -244,7 +262,15 @@ export const createAdminRouter = ({
         `SELECT cr.id, cr.agent_id, cr.customer_name, cr.customer_phone, cr.status,
                 cr.status_details, cr.source_path, cr.created_at, cr.updated_at,
                 a.display_name AS agent_name, a.city_slug, a.locality_name,
-                a.address AS agent_address, a.phone AS agent_phone, a.is_active AS agent_active
+                a.address AS agent_address, a.phone AS agent_phone, a.is_active AS agent_active,
+                COALESCE(
+                  NULLIF(ARRAY(
+                    SELECT ap.phone FROM agent_phones ap
+                    WHERE ap.agent_id = a.id
+                    ORDER BY ap.sort_order, ap.created_at, ap.phone
+                  ), ARRAY[]::VARCHAR[]),
+                  ARRAY[a.phone]
+                ) AS agent_phones
          FROM callback_requests cr
          JOIN agents a ON a.id = cr.agent_id
          ${where}
@@ -258,11 +284,78 @@ export const createAdminRouter = ({
     }
   });
 
+  router.patch('/callback-requests/:id/agent', requireCsrf, async (request, response, next) => {
+    const requestId = String(request.params.id || '');
+    const targetAgentId = String(request.body.agentId || '');
+    if (!isUuid(requestId) || !isUuid(targetAgentId)) {
+      return response.status(400).json({ error: 'Некорректная заявка или агент.' });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const callbackResult = await client.query(
+        `SELECT cr.id, cr.agent_id, a.city_slug
+         FROM callback_requests cr
+         JOIN agents a ON a.id = cr.agent_id
+         WHERE cr.id = $1
+         FOR UPDATE OF cr`,
+        [requestId]
+      );
+      if (!callbackResult.rowCount) {
+        await client.query('ROLLBACK');
+        return response.status(404).json({ error: 'Заявка не найдена.' });
+      }
+
+      const callback = callbackResult.rows[0];
+      if (callback.agent_id === targetAgentId) {
+        await client.query('ROLLBACK');
+        return response.status(409).json({ error: 'Заявка уже назначена этому агенту.' });
+      }
+
+      const targetResult = await client.query(
+        `SELECT id, display_name, city_slug
+         FROM agents
+         WHERE id = $1 AND is_active = TRUE AND cabinet_enabled = TRUE
+           AND merged_into_agent_id IS NULL`,
+        [targetAgentId]
+      );
+      if (!targetResult.rowCount) {
+        await client.query('ROLLBACK');
+        return response.status(404).json({ error: 'Активный личный кабинет выбранного агента не найден.' });
+      }
+
+      const targetAgent = targetResult.rows[0];
+      if (targetAgent.city_slug !== callback.city_slug) {
+        await client.query('ROLLBACK');
+        return response.status(409).json({ error: 'Передать заявку можно только агенту из того же населённого пункта.' });
+      }
+
+      await client.query(
+        `UPDATE callback_requests
+         SET agent_id = $1, updated_at = NOW()
+         WHERE id = $2`,
+        [targetAgentId, requestId]
+      );
+      await client.query('COMMIT');
+      return response.json({
+        id: requestId,
+        agentId: targetAgent.id,
+        message: `Заявка передана агенту «${targetAgent.display_name}».`
+      });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      return next(error);
+    } finally {
+      client.release();
+    }
+  });
+
   router.post('/agents', requireCsrf, async (request, response, next) => {
     const localitySlug = String(request.body.localitySlug || '').trim().toLowerCase();
     const displayName = cleanText(request.body.displayName, 160);
     const address = cleanText(request.body.address, 240);
-    const phone = normalizePhone(request.body.phone);
+    const phones = normalizePhoneList(request.body.phones?.length ? request.body.phones : request.body.phone);
     const note = String(request.body.note || '').trim().replace(/\s+/g, ' ') || null;
     const rawMapUrl = String(request.body.mapUrl || '').trim();
     const mapUrl = cleanMapUrl(rawMapUrl);
@@ -271,7 +364,8 @@ export const createAdminRouter = ({
     const password = cabinetEnabled ? String(request.body.password || '') : '';
 
     if (!/^[a-z0-9-]{2,80}$/.test(localitySlug) || !displayName || !address
-      || phone.length < 10 || phone.length > 15 || (note && note.length > 240)
+      || !phones.length || phones.length > 20
+      || phones.some((phone) => phone.length < 10 || phone.length > 15) || (note && note.length > 240)
       || (rawMapUrl && !mapUrl) || (cabinetEnabled && (!login || password.length < 12 || password.length > 200))) {
       return response.status(400).json({ error: 'Проверьте данные агента. Пароль кабинета должен содержать не менее 12 символов.' });
     }
@@ -283,7 +377,7 @@ export const createAdminRouter = ({
         `SELECT locality_name, district_slug, district_name, is_primary_city,
                 district_order, locality_order
          FROM agents
-         WHERE city_slug = $1
+         WHERE city_slug = $1 AND merged_into_agent_id IS NULL
          ORDER BY is_active DESC, sort_order NULLS LAST
          LIMIT 1`,
         [localitySlug]
@@ -292,15 +386,30 @@ export const createAdminRouter = ({
         await client.query('ROLLBACK');
         return response.status(400).json({ error: 'Населённый пункт не найден в справочнике.' });
       }
-      const existing = await client.query(
-        'SELECT id, is_active FROM agents WHERE city_slug = $1 AND address_key = $2 AND phone = $3',
-        [localitySlug, normalizeAddress(address), phone]
-      );
+      const addressKey = normalizeAddress(address);
+      const existing = addressKey === 'безофиса'
+        ? await client.query(
+          `SELECT a.id, a.is_active
+           FROM agents a
+           JOIN agent_phones ap ON ap.agent_id = a.id
+           WHERE a.city_slug = $1 AND a.address_key = $2
+             AND a.merged_into_agent_id IS NULL AND ap.phone = ANY($3::VARCHAR[])
+           LIMIT 1`,
+          [localitySlug, addressKey, phones]
+        )
+        : await client.query(
+          `SELECT id, is_active FROM agents
+           WHERE city_slug = $1 AND address_key = $2 AND merged_into_agent_id IS NULL
+           LIMIT 1`,
+          [localitySlug, addressKey]
+        );
       if (existing.rowCount) {
         await client.query('ROLLBACK');
         return response.status(409).json({
           error: existing.rows[0].is_active
-            ? 'Агент с таким адресом и телефоном уже существует.'
+            ? (addressKey === 'безофиса'
+              ? 'Агент «Без офиса» с одним из этих телефонов уже существует.'
+              : 'Агент с таким адресом в этом населённом пункте уже существует.')
             : 'Такой агент был удалён. Восстановите его в списке неактивных.',
           agentId: existing.rows[0].id
         });
@@ -311,6 +420,7 @@ export const createAdminRouter = ({
         [localitySlug]
       );
       const passwordHash = cabinetEnabled ? await bcrypt.hash(password, 12) : null;
+      const agentId = randomUUID();
       const result = await client.query(
         `INSERT INTO agents
            (id, login, display_name, city_slug, locality_name, district_slug, district_name,
@@ -321,12 +431,19 @@ export const createAdminRouter = ({
             $14, $15, TRUE, $16, $17, $18)
          RETURNING id`,
         [
-          randomUUID(), login, displayName, localitySlug, metadata.locality_name,
+          agentId, login, displayName, localitySlug, metadata.locality_name,
           metadata.district_slug, metadata.district_name, metadata.is_primary_city,
-          metadata.district_order, metadata.locality_order, address, normalizeAddress(address),
-          phone, passwordHash, cabinetEnabled, orderResult.rows[0].next_order, note, mapUrl
+          metadata.district_order, metadata.locality_order, address, addressKey,
+          phones[0], passwordHash, cabinetEnabled, orderResult.rows[0].next_order, note, mapUrl
         ]
       );
+      for (let phoneIndex = 0; phoneIndex < phones.length; phoneIndex += 1) {
+        await client.query(
+          `INSERT INTO agent_phones (agent_id, phone, sort_order)
+           VALUES ($1, $2, $3)`,
+          [agentId, phones[phoneIndex], phoneIndex]
+        );
+      }
       await client.query('COMMIT');
       return response.status(201).json({ id: result.rows[0].id, message: 'Агент добавлен.' });
     } catch (error) {
@@ -350,7 +467,7 @@ export const createAdminRouter = ({
       const result = await pool.query(
         `UPDATE agents
          SET login = $1, password_hash = $2, cabinet_enabled = TRUE, updated_at = NOW()
-         WHERE id = $3 AND is_active = TRUE
+         WHERE id = $3 AND is_active = TRUE AND merged_into_agent_id IS NULL
          RETURNING id, login`,
         [login, passwordHash, request.params.id]
       );
@@ -372,7 +489,7 @@ export const createAdminRouter = ({
       const result = await pool.query(
         `UPDATE agents
          SET is_active = FALSE, updated_at = NOW()
-         WHERE id = $1 AND is_active = TRUE
+         WHERE id = $1 AND is_active = TRUE AND merged_into_agent_id IS NULL
          RETURNING id`,
         [request.params.id]
       );
@@ -388,7 +505,7 @@ export const createAdminRouter = ({
       if (!isUuid(request.params.id)) return response.status(400).json({ error: 'Некорректный агент.' });
       const result = await pool.query(
         `UPDATE agents SET is_active = TRUE, updated_at = NOW()
-         WHERE id = $1 AND is_active = FALSE
+         WHERE id = $1 AND is_active = FALSE AND merged_into_agent_id IS NULL
          RETURNING id`,
         [request.params.id]
       );

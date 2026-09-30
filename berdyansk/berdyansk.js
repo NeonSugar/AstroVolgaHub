@@ -189,7 +189,9 @@
   };
 
   const createAgentCard = ({ address, note, mapUrl, agents }) => {
-    const phones = [...new Set(agents.map((agent) => agent.phone))];
+    const phones = [...new Set(agents.flatMap((agent) =>
+      agent.phones?.length ? agent.phones : [agent.phone]
+    ).filter(Boolean))];
     const card = document.createElement('article');
     card.className = 'agent-card';
     card.dataset.agentCard = '';

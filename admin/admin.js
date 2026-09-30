@@ -39,6 +39,8 @@
   const agentModal = document.querySelector('[data-agent-modal]');
   const agentForm = document.querySelector('[data-agent-form]');
   const agentFormStatus = document.querySelector('[data-agent-form-status]');
+  const agentPhoneList = document.querySelector('[data-agent-phone-list]');
+  const addAgentPhoneButton = document.querySelector('[data-add-agent-phone]');
   const cabinetToggle = agentForm?.elements.cabinetEnabled;
   const cabinetFields = document.querySelector('[data-cabinet-fields]');
   const cabinetModal = document.querySelector('[data-cabinet-modal]');
@@ -47,6 +49,11 @@
   const cabinetModalTitle = document.querySelector('[data-cabinet-modal-title]');
   const cabinetAgentName = document.querySelector('[data-cabinet-agent-name]');
   const cabinetHint = document.querySelector('[data-cabinet-hint]');
+  const transferModal = document.querySelector('[data-transfer-modal]');
+  const transferForm = document.querySelector('[data-transfer-form]');
+  const transferClient = document.querySelector('[data-transfer-client]');
+  const transferCurrentAgent = document.querySelector('[data-transfer-current-agent]');
+  const transferFormStatus = document.querySelector('[data-transfer-form-status]');
   const toast = document.querySelector('[data-toast]');
 
   let csrfToken = '';
@@ -59,6 +66,7 @@
   let agentPage = 1;
   let activeSection = 'requests';
   let selectedCabinetAgent = null;
+  let selectedTransferRequest = null;
   let toastTimer;
   const refreshInterval = 15_000;
   const mobileAdminMedia = window.matchMedia('(max-width: 760px)');
@@ -74,6 +82,41 @@
   const formatPhone = (value) => {
     const digits = String(value || '').replace(/\D/g, '');
     return digits.length === 11 ? `+${digits[0]} (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7, 9)}-${digits.slice(9)}` : value;
+  };
+  const getAgentPhoneInputs = () => [...agentPhoneList.querySelectorAll('input[name="phones"]')];
+  const getPrimaryAgentPhone = () => getAgentPhoneInputs()[0]?.value || '';
+  const syncAgentPhoneRows = () => {
+    const rows = [...agentPhoneList.querySelectorAll('.admin-phone-row')];
+    rows.forEach((row) => {
+      const remove = row.querySelector('[data-remove-agent-phone]');
+      remove.hidden = rows.length === 1;
+    });
+  };
+  const addAgentPhoneRow = (value = '') => {
+    const row = document.createElement('label');
+    row.className = 'admin-phone-row';
+    const input = document.createElement('input');
+    input.name = 'phones';
+    input.type = 'tel';
+    input.placeholder = '+7 900 000-00-00';
+    input.maxLength = 24;
+    input.required = true;
+    input.value = value;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.dataset.removeAgentPhone = '';
+    remove.setAttribute('aria-label', 'Удалить телефон');
+    remove.textContent = '×';
+    row.append(input, remove);
+    agentPhoneList.append(row);
+    syncAgentPhoneRows();
+    input.focus();
+  };
+  const resetAgentPhoneRows = () => {
+    const inputs = getAgentPhoneInputs();
+    inputs.slice(1).forEach((input) => input.closest('.admin-phone-row').remove());
+    if (inputs[0]) inputs[0].value = '';
+    syncAgentPhoneRows();
   };
   const formatDate = (value) => {
     const date = new Date(value);
@@ -418,10 +461,28 @@
     agentName.textContent = request.agent.displayName;
     const agentPlace = document.createElement('small');
     agentPlace.textContent = `${request.agent.localityName} · ${request.agent.address}`;
-    const agentPhone = document.createElement('a');
-    agentPhone.href = `tel:+${request.agent.phone}`;
-    agentPhone.textContent = formatPhone(request.agent.phone);
-    agent.append(createCellLabel('Агент'), agentName, agentPlace, agentPhone);
+    const agentPhones = document.createElement('div');
+    agentPhones.className = 'admin-agent-phones';
+    (request.agent.phones?.length ? request.agent.phones : [request.agent.phone]).forEach((phone) => {
+      const link = document.createElement('a');
+      link.href = `tel:+${phone}`;
+      link.textContent = formatPhone(phone);
+      agentPhones.append(link);
+    });
+    const eligibleAgents = agents.filter((candidate) => candidate.isActive
+      && candidate.hasCabinet
+      && candidate.localitySlug === request.agent.localitySlug
+      && candidate.id !== request.agent.id);
+    const transferButton = document.createElement('button');
+    transferButton.type = 'button';
+    transferButton.className = 'admin-transfer-button';
+    transferButton.textContent = 'Передать заявку';
+    transferButton.disabled = !eligibleAgents.length;
+    transferButton.title = eligibleAgents.length
+      ? 'Выбрать другого агента'
+      : 'В этом населённом пункте нет другого агента с активным личным кабинетом';
+    transferButton.addEventListener('click', () => openTransferModal(request, eligibleAgents));
+    agent.append(createCellLabel('Агент'), agentName, agentPlace, agentPhones, transferButton);
 
     const status = document.createElement('div');
     status.className = 'admin-request-status';
@@ -454,7 +515,7 @@
     const query = normalize(requestSearch.value);
     const visible = requests.filter((request) => !query || normalize([
       request.customerName, request.customerPhone, request.agent.displayName,
-      request.agent.localityName, request.agent.address, request.agent.phone
+      request.agent.localityName, request.agent.address, ...(request.agent.phones || [request.agent.phone])
     ].join(' ')).includes(query));
     const pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
     requestPage = Math.min(requestPage, pageCount);
@@ -500,10 +561,15 @@
     name.textContent = agent.displayName;
     const place = document.createElement('p');
     place.textContent = `${agent.localityName} · ${agent.address}`;
-    const phone = document.createElement('a');
-    phone.href = `tel:+${agent.phone}`;
-    phone.textContent = formatPhone(agent.phone);
-    identity.append(name, place, phone);
+    const phones = document.createElement('div');
+    phones.className = 'admin-agent-phones';
+    (agent.phones?.length ? agent.phones : [agent.phone]).forEach((phone) => {
+      const link = document.createElement('a');
+      link.href = `tel:+${phone}`;
+      link.textContent = formatPhone(phone);
+      phones.append(link);
+    });
+    identity.append(name, place, phones);
 
     const access = document.createElement('div');
     access.className = 'admin-agent-access';
@@ -553,7 +619,7 @@
       if (agentLocality.value && agent.localitySlug !== agentLocality.value) return false;
       if (agentState.value === 'active' && !agent.isActive) return false;
       if (agentState.value === 'inactive' && agent.isActive) return false;
-      return !query || normalize(`${agent.displayName} ${agent.localityName} ${agent.address} ${agent.phone} ${agent.login || ''}`).includes(query);
+      return !query || normalize(`${agent.displayName} ${agent.localityName} ${agent.address} ${(agent.phones || [agent.phone]).join(' ')} ${agent.login || ''}`).includes(query);
     });
     const pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
     agentPage = Math.min(agentPage, pageCount);
@@ -576,7 +642,7 @@
     const selected = requestAgent.value;
     fillSelect(requestAgent, agents.filter((agent) => agent.isActive).map((agent) => ({
       value: agent.id,
-      label: `${agent.displayName} · ${agent.localityName} · ${formatPhone(agent.phone)}`
+      label: `${agent.displayName} · ${agent.localityName} · ${(agent.phones || [agent.phone]).map(formatPhone).join(', ')}`
     })), 'Все агенты', selected);
   };
 
@@ -620,6 +686,7 @@
 
   const openAgentModal = () => {
     agentForm.reset();
+    resetAgentPhoneRows();
     agentForm.elements.login.dataset.generated = 'false';
     agentForm.elements.password.type = 'password';
     cabinetFields.hidden = true;
@@ -636,7 +703,7 @@
   const generateNewAgentLogin = () => {
     agentForm.elements.login.value = generateLogin({
       localitySlug: agentForm.elements.localitySlug.value,
-      phone: agentForm.elements.phone.value
+      phone: getPrimaryAgentPhone()
     });
     agentForm.elements.login.dataset.generated = 'true';
   };
@@ -657,7 +724,7 @@
     cabinetForm.reset();
     cabinetFormStatus.textContent = '';
     cabinetModalTitle.textContent = agent.hasCabinet ? 'Настроить личный кабинет' : 'Создать личный кабинет';
-    cabinetAgentName.textContent = `${agent.displayName} · ${agent.localityName} · ${formatPhone(agent.phone)}`;
+    cabinetAgentName.textContent = `${agent.displayName} · ${agent.localityName} · ${(agent.phones || [agent.phone]).map(formatPhone).join(', ')}`;
     cabinetHint.textContent = agent.hasCabinet
       ? 'После сохранения прежний пароль перестанет работать. Скопируйте новые данные.'
       : 'Скопируйте данные и передайте их агенту.';
@@ -671,6 +738,37 @@
   const closeCabinetModal = () => {
     cabinetModal.hidden = true;
     selectedCabinetAgent = null;
+    document.body.classList.remove('has-cabinet-modal');
+  };
+
+  const openTransferModal = (callbackRequest, eligibleAgents) => {
+    if (!eligibleAgents.length) {
+      showToast('В этом населённом пункте нет другого агента с активным личным кабинетом.', 'error');
+      return;
+    }
+    selectedTransferRequest = callbackRequest;
+    transferForm.reset();
+    transferFormStatus.textContent = '';
+    transferClient.textContent = `${callbackRequest.customerName} · ${formatPhone(callbackRequest.customerPhone)} · ${callbackRequest.agent.localityName}`;
+    transferCurrentAgent.textContent = `${callbackRequest.agent.displayName} · ${callbackRequest.agent.address}`;
+    fillSelect(
+      transferForm.elements.agentId,
+      eligibleAgents.map((agent) => ({
+        value: agent.id,
+        label: `${agent.displayName} · ${agent.address} · ${(agent.phones || [agent.phone]).map(formatPhone).join(', ')}`
+      })),
+      'Выберите нового агента',
+      ''
+    );
+    transferModal.hidden = false;
+    document.body.classList.add('has-cabinet-modal');
+    window.requestAnimationFrame(() => transferForm.elements.agentId.focus());
+  };
+
+  const closeTransferModal = () => {
+    transferModal.hidden = true;
+    selectedTransferRequest = null;
+    transferFormStatus.textContent = '';
     document.body.classList.remove('has-cabinet-modal');
   };
 
@@ -760,6 +858,7 @@
   document.querySelector('[data-add-agent]').addEventListener('click', openAgentModal);
   document.querySelectorAll('[data-agent-modal-close]').forEach((button) => button.addEventListener('click', closeAgentModal));
   document.querySelectorAll('[data-cabinet-modal-close]').forEach((button) => button.addEventListener('click', closeCabinetModal));
+  document.querySelectorAll('[data-transfer-modal-close]').forEach((button) => button.addEventListener('click', closeTransferModal));
   cabinetToggle.addEventListener('change', () => {
     cabinetFields.hidden = !cabinetToggle.checked;
     agentForm.elements.login.required = cabinetToggle.checked;
@@ -772,7 +871,15 @@
   agentForm.elements.localitySlug.addEventListener('change', () => {
     if (cabinetToggle.checked && agentForm.elements.login.dataset.generated === 'true') generateNewAgentLogin();
   });
-  agentForm.elements.phone.addEventListener('input', () => {
+  agentPhoneList.addEventListener('input', () => {
+    if (cabinetToggle.checked && agentForm.elements.login.dataset.generated === 'true') generateNewAgentLogin();
+  });
+  addAgentPhoneButton.addEventListener('click', () => addAgentPhoneRow());
+  agentPhoneList.addEventListener('click', (event) => {
+    const remove = event.target.closest('[data-remove-agent-phone]');
+    if (!remove || getAgentPhoneInputs().length === 1) return;
+    remove.closest('.admin-phone-row').remove();
+    syncAgentPhoneRows();
     if (cabinetToggle.checked && agentForm.elements.login.dataset.generated === 'true') generateNewAgentLogin();
   });
   agentForm.elements.login.addEventListener('input', () => { agentForm.elements.login.dataset.generated = 'false'; });
@@ -789,6 +896,30 @@
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !agentModal.hidden) closeAgentModal();
     if (event.key === 'Escape' && !cabinetModal.hidden) closeCabinetModal();
+    if (event.key === 'Escape' && !transferModal.hidden) closeTransferModal();
+  });
+
+  transferForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!selectedTransferRequest || !transferForm.reportValidity()) return;
+    const submit = transferForm.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    transferFormStatus.textContent = 'Передаём заявку…';
+    try {
+      const formData = new FormData(transferForm);
+      const data = await apiRequest(`/api/admin/callback-requests/${selectedTransferRequest.id}/agent`, {
+        method: 'PATCH',
+        body: JSON.stringify({ agentId: formData.get('agentId') })
+      });
+      closeTransferModal();
+      showToast(data.message || 'Заявка передана другому агенту.');
+      await loadAll();
+    } catch (error) {
+      transferFormStatus.textContent = error.message;
+      showToast(error.message, 'error');
+    } finally {
+      submit.disabled = false;
+    }
   });
 
   agentForm.addEventListener('submit', async (event) => {
@@ -803,7 +934,7 @@
         method: 'POST',
         body: JSON.stringify({
           localitySlug: formData.get('localitySlug'), displayName: formData.get('displayName'),
-          address: formData.get('address'), phone: formData.get('phone'), note: formData.get('note'),
+          address: formData.get('address'), phones: formData.getAll('phones'), note: formData.get('note'),
           mapUrl: formData.get('mapUrl'), cabinetEnabled: formData.get('cabinetEnabled') === 'on',
           login: formData.get('login'), password: formData.get('password')
         })

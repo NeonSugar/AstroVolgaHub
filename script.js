@@ -19,7 +19,9 @@
       const pointKey = agent.addressKey === 'безофиса' ? `безофиса:${agent.id}` : agent.addressKey;
       if (!points.has(pointKey)) points.set(pointKey, [agent.address, []]);
       const phones = points.get(pointKey)[1];
-      if (!phones.includes(agent.phone)) phones.push(agent.phone);
+      (agent.phones?.length ? agent.phones : [agent.phone]).filter(Boolean).forEach((phone) => {
+        if (!phones.includes(phone)) phones.push(phone);
+      });
     });
     return [...points.values()];
   };

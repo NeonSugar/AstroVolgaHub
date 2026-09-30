@@ -64,7 +64,8 @@ const publicAgent = (row) => ({
   isPrimaryCity: Boolean(row.is_primary_city),
   address: row.address,
   addressKey: row.address_key,
-  phone: row.phone,
+  phone: row.phones?.[0] || row.phone,
+  phones: row.phones?.length ? row.phones : [row.phone].filter(Boolean),
   note: row.note,
   mapUrl: row.map_url,
   hasCabinet: Boolean(row.cabinet_enabled)
@@ -90,7 +91,9 @@ export const createApp = ({ pool, config }) => {
     if (!request.session.agentId) return response.status(401).json({ error: 'Требуется вход в личный кабинет.' });
     try {
       const result = await pool.query(
-        'SELECT 1 FROM agents WHERE id = $1 AND cabinet_enabled = TRUE AND is_active = TRUE',
+        `SELECT 1 FROM agents
+         WHERE id = $1 AND cabinet_enabled = TRUE AND is_active = TRUE
+           AND merged_into_agent_id IS NULL`,
         [request.session.agentId]
       );
       if (result.rowCount) return next();
@@ -196,20 +199,27 @@ export const createApp = ({ pool, config }) => {
       let localityFilter = '';
       if (locality) {
         parameters.push(locality);
-        localityFilter = 'AND city_slug = $1';
+        localityFilter = 'AND a.city_slug = $1';
       }
       const result = await pool.query(
-        `SELECT id, display_name, city_slug, locality_name, district_slug, district_name,
-                is_primary_city, address, address_key, phone, note, map_url, cabinet_enabled
-         FROM agents
-         WHERE is_active = TRUE ${localityFilter}
-         ORDER BY is_primary_city DESC NULLS LAST,
-                  district_order NULLS FIRST,
-                  locality_order NULLS LAST,
-                  locality_name,
-                  sort_order NULLS LAST,
-                  address,
-                  phone`,
+        `SELECT a.id, a.display_name, a.city_slug, a.locality_name, a.district_slug, a.district_name,
+                a.is_primary_city, a.address, a.address_key, a.phone, a.note, a.map_url, a.cabinet_enabled,
+                COALESCE(
+                  ARRAY_AGG(ap.phone ORDER BY ap.sort_order, ap.created_at, ap.phone)
+                    FILTER (WHERE ap.phone IS NOT NULL),
+                  ARRAY[a.phone]
+                ) AS phones
+         FROM agents a
+         LEFT JOIN agent_phones ap ON ap.agent_id = a.id
+         WHERE a.is_active = TRUE AND a.merged_into_agent_id IS NULL ${localityFilter}
+         GROUP BY a.id
+         ORDER BY a.is_primary_city DESC NULLS LAST,
+                  a.district_order NULLS FIRST,
+                  a.locality_order NULLS LAST,
+                  a.locality_name,
+                  a.sort_order NULLS LAST,
+                  a.address,
+                  a.phone`,
         parameters
       );
       return response.json({ agents: result.rows.map(publicAgent) });
@@ -229,7 +239,9 @@ export const createApp = ({ pool, config }) => {
       }
 
       const agentResult = await pool.query(
-        'SELECT id FROM agents WHERE id = $1 AND cabinet_enabled = TRUE AND is_active = TRUE',
+        `SELECT id FROM agents
+         WHERE id = $1 AND cabinet_enabled = TRUE AND is_active = TRUE
+           AND merged_into_agent_id IS NULL`,
         [agentId]
       );
       if (!agentResult.rowCount) return response.status(404).json({ error: 'Личный кабинет агента недоступен.' });
@@ -259,9 +271,17 @@ export const createApp = ({ pool, config }) => {
         return response.status(400).json({ error: 'Введите логин и пароль.' });
       }
       const result = await pool.query(
-        `SELECT id, login, display_name, city_slug, address, phone, password_hash
-         FROM agents
-         WHERE login = $1 AND cabinet_enabled = TRUE AND is_active = TRUE`,
+        `SELECT a.id, a.login, a.display_name, a.city_slug, a.address, a.phone, a.password_hash,
+                COALESCE(
+                  ARRAY_AGG(ap.phone ORDER BY ap.sort_order, ap.created_at, ap.phone)
+                    FILTER (WHERE ap.phone IS NOT NULL),
+                  ARRAY[a.phone]
+                ) AS phones
+         FROM agents a
+         LEFT JOIN agent_phones ap ON ap.agent_id = a.id
+         WHERE a.login = $1 AND a.cabinet_enabled = TRUE AND a.is_active = TRUE
+           AND a.merged_into_agent_id IS NULL
+         GROUP BY a.id`,
         [login]
       );
       const agent = result.rows[0];
@@ -277,7 +297,8 @@ export const createApp = ({ pool, config }) => {
           displayName: agent.display_name,
           citySlug: agent.city_slug,
           address: agent.address,
-          phone: agent.phone
+          phone: agent.phones?.[0] || agent.phone,
+          phones: agent.phones?.length ? agent.phones : [agent.phone]
         }
       });
     } catch (error) {
@@ -299,8 +320,17 @@ export const createApp = ({ pool, config }) => {
     try {
       if (!request.session.agentId) return response.status(401).json({ error: 'Требуется вход в личный кабинет.' });
       const result = await pool.query(
-        `SELECT display_name, city_slug, address, phone
-         FROM agents WHERE id = $1 AND cabinet_enabled = TRUE AND is_active = TRUE`,
+        `SELECT a.display_name, a.city_slug, a.address, a.phone,
+                COALESCE(
+                  ARRAY_AGG(ap.phone ORDER BY ap.sort_order, ap.created_at, ap.phone)
+                    FILTER (WHERE ap.phone IS NOT NULL),
+                  ARRAY[a.phone]
+                ) AS phones
+         FROM agents a
+         LEFT JOIN agent_phones ap ON ap.agent_id = a.id
+         WHERE a.id = $1 AND a.cabinet_enabled = TRUE AND a.is_active = TRUE
+           AND a.merged_into_agent_id IS NULL
+         GROUP BY a.id`,
         [request.session.agentId]
       );
       if (!result.rowCount) {
@@ -313,7 +343,8 @@ export const createApp = ({ pool, config }) => {
           displayName: agent.display_name,
           citySlug: agent.city_slug,
           address: agent.address,
-          phone: agent.phone
+          phone: agent.phones?.[0] || agent.phone,
+          phones: agent.phones?.length ? agent.phones : [agent.phone]
         }
       });
     } catch (error) {

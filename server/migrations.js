@@ -6,7 +6,13 @@ import { seedAgentDirectory } from './agent-directory-seed.js';
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 
 export const runMigrations = async (pool) => {
-  const migrationFiles = ['001_init.sql', '002_callback_workflow.sql', '003_agent_directory.sql', '004_admin_panel.sql'];
+  const migrationFiles = [
+    '001_init.sql',
+    '002_callback_workflow.sql',
+    '003_agent_directory.sql',
+    '004_admin_panel.sql',
+    '005_agent_phones.sql'
+  ];
   const client = await pool.connect();
   try {
     await client.query('BEGIN');

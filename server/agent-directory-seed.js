@@ -158,45 +158,108 @@ export const loadAgentSeedRecords = async () => {
   return [...uniqueRecords.values()];
 };
 
+export const groupAgentSeedRecords = (records) => {
+  const groups = new Map();
+
+  records.forEach((record) => {
+    const isOffsite = record.addressKey === 'безофиса';
+    const groupKey = isOffsite
+      ? `${record.localitySlug}|${record.addressKey}|${record.phone}`
+      : `${record.localitySlug}|${record.addressKey}`;
+    const group = groups.get(groupKey) || { ...record, phones: [] };
+    if (!group.phones.includes(record.phone)) group.phones.push(record.phone);
+    group.sortOrder = Math.min(group.sortOrder, record.sortOrder);
+    if (!group.note && record.note) group.note = record.note;
+    if (!group.mapUrl && record.mapUrl) group.mapUrl = record.mapUrl;
+    groups.set(groupKey, group);
+  });
+
+  return [...groups.values()];
+};
+
 export const seedAgentDirectory = async (client) => {
   const records = await loadAgentSeedRecords();
-  for (const record of records) {
-    await client.query(
-      `INSERT INTO agents
-         (id, login, display_name, city_slug, locality_name, district_slug, district_name,
-          is_primary_city, district_order, locality_order, address, address_key, phone,
-          password_hash, cabinet_enabled, is_active, sort_order, note, map_url)
-       VALUES
-         ($1, NULL, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-          NULL, FALSE, TRUE, $13, $14, $15)
-       ON CONFLICT (city_slug, address_key, phone)
-       DO UPDATE SET locality_name = COALESCE(agents.locality_name, EXCLUDED.locality_name),
-                     district_slug = COALESCE(agents.district_slug, EXCLUDED.district_slug),
-                     district_name = COALESCE(agents.district_name, EXCLUDED.district_name),
-                     is_primary_city = COALESCE(agents.is_primary_city, EXCLUDED.is_primary_city),
-                     district_order = COALESCE(agents.district_order, EXCLUDED.district_order),
-                     locality_order = COALESCE(agents.locality_order, EXCLUDED.locality_order),
-                     sort_order = COALESCE(agents.sort_order, EXCLUDED.sort_order),
-                     note = COALESCE(agents.note, EXCLUDED.note),
-                     map_url = COALESCE(agents.map_url, EXCLUDED.map_url)`,
-      [
-        randomUUID(),
-        `Агент — ${record.address}`,
-        record.localitySlug,
-        record.localityName,
-        record.districtSlug,
-        record.districtName,
-        record.isPrimaryCity,
-        record.districtOrder,
-        record.localityOrder,
-        record.address,
-        record.addressKey,
-        record.phone,
-        record.sortOrder,
-        record.note,
-        record.mapUrl
-      ]
-    );
+  const groups = groupAgentSeedRecords(records);
+
+  for (const record of groups) {
+    const existing = record.addressKey === 'безофиса'
+      ? await client.query(
+        `SELECT a.id
+         FROM agents a
+         JOIN agent_phones ap ON ap.agent_id = a.id AND ap.phone = $3
+         WHERE a.city_slug = $1 AND a.address_key = $2 AND a.merged_into_agent_id IS NULL
+         ORDER BY a.cabinet_enabled DESC, a.is_active DESC, a.created_at, a.id
+         LIMIT 1`,
+        [record.localitySlug, record.addressKey, record.phones[0]]
+      )
+      : await client.query(
+        `SELECT id
+         FROM agents
+         WHERE city_slug = $1 AND address_key = $2 AND merged_into_agent_id IS NULL
+         ORDER BY cabinet_enabled DESC, is_active DESC, created_at, id
+         LIMIT 1`,
+        [record.localitySlug, record.addressKey]
+      );
+
+    let agentId = existing.rows[0]?.id;
+    if (agentId) {
+      await client.query(
+        `UPDATE agents
+         SET locality_name = COALESCE(locality_name, $2),
+             district_slug = COALESCE(district_slug, $3),
+             district_name = COALESCE(district_name, $4),
+             is_primary_city = COALESCE(is_primary_city, $5),
+             district_order = COALESCE(district_order, $6),
+             locality_order = COALESCE(locality_order, $7),
+             sort_order = LEAST(COALESCE(sort_order, $8), $8),
+             note = COALESCE(note, $9),
+             map_url = COALESCE(map_url, $10)
+         WHERE id = $1`,
+        [
+          agentId, record.localityName, record.districtSlug, record.districtName,
+          record.isPrimaryCity, record.districtOrder, record.localityOrder,
+          record.sortOrder, record.note, record.mapUrl
+        ]
+      );
+    } else {
+      agentId = randomUUID();
+      await client.query(
+        `INSERT INTO agents
+           (id, login, display_name, city_slug, locality_name, district_slug, district_name,
+            is_primary_city, district_order, locality_order, address, address_key, phone,
+            password_hash, cabinet_enabled, is_active, sort_order, note, map_url)
+         VALUES
+           ($1, NULL, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+            NULL, FALSE, TRUE, $13, $14, $15)`,
+        [
+          agentId,
+          `Агент — ${record.address}`,
+          record.localitySlug,
+          record.localityName,
+          record.districtSlug,
+          record.districtName,
+          record.isPrimaryCity,
+          record.districtOrder,
+          record.localityOrder,
+          record.address,
+          record.addressKey,
+          record.phones[0],
+          record.sortOrder,
+          record.note,
+          record.mapUrl
+        ]
+      );
+    }
+
+    for (let phoneIndex = 0; phoneIndex < record.phones.length; phoneIndex += 1) {
+      await client.query(
+        `INSERT INTO agent_phones (agent_id, phone, sort_order)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (agent_id, phone)
+         DO UPDATE SET sort_order = LEAST(agent_phones.sort_order, EXCLUDED.sort_order)`,
+        [agentId, record.phones[phoneIndex], phoneIndex]
+      );
+    }
   }
-  return records.length;
+  return groups.length;
 };
