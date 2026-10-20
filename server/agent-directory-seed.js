@@ -23,7 +23,7 @@ const districts = [
   ['akimovsky', 'Акимовский район', ['akimovka', 'kirillovka', 'shevlyuki']],
   ['berdyansky', 'Бердянский район', ['andreevka', 'osipenko', 'troyany']],
   ['vasilevsky', 'Васильевский район', ['dneprorudnoe', 'malaya-belozerka', 'skelki']],
-  ['kamensko-dneprovsky', 'Каменско-Днепровский район', ['blagoveshchenka', 'velikaya-belozerka', 'vodyanoe', 'zapovitnoe', 'ivanovka', 'novovodyanoe', 'novodneprovka']],
+  ['kamensko-dneprovsky', 'Каменско-Днепровский район', ['blagoveshchenka', 'velikaya-belozerka', 'vodyanoe', 'dneprovka', 'zapovitnoe', 'ivanovka', 'novovodyanoe', 'novodneprovka']],
   ['kuybyshevsky', 'Куйбышевский район', ['belotserkovka', 'kamysh-zarya', 'kuybyshevo', 'rozovka']],
   ['melitopolsky', 'Мелитопольский район', ['novobogdanovka', 'polyanovka', 'terpenye']],
   ['mikhailovsky', 'Михайловский район', ['mikhailovka']],
@@ -32,6 +32,15 @@ const districts = [
   ['primorsky', 'Приморский район', ['zelenovka', 'komarovka', 'yuryevka']],
   ['chernigovsky', 'Черниговский район', ['chernigovka']]
 ];
+
+const supplementalAdditionalLocalities = {
+  dneprovka: [
+    'Днепровка',
+    [
+      ['ул. Центральная, 178', ['79900703726', '79900703682']]
+    ]
+  ]
+};
 
 const decodeHtml = (value) => String(value || '')
   .replace(/<[^>]+>/g, ' ')
@@ -118,7 +127,12 @@ export const loadAgentSeedRecords = async () => {
     });
   }
 
-  Object.entries(legacy.additional || {}).forEach(([localitySlug, [localityName, points]], fallbackOrder) => {
+  const additionalLocalities = {
+    ...(legacy.additional || {}),
+    ...supplementalAdditionalLocalities
+  };
+
+  Object.entries(additionalLocalities).forEach(([localitySlug, [localityName, points]], fallbackOrder) => {
     const district = districtByLocality.get(localitySlug) || {
       districtSlug: 'other',
       districtName: 'Другие населённые пункты',
