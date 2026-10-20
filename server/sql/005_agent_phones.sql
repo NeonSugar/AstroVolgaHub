@@ -111,10 +111,16 @@ SET login = NULL,
 WHERE merged_into_agent_id IS NOT NULL
   AND (login IS NOT NULL OR password_hash IS NOT NULL OR cabinet_enabled = TRUE OR is_active = TRUE);
 
+-- Contact phones now live in agent_phones. The legacy three-column constraint
+-- also covers archived rows and prevents the seeder from recreating an active
+-- agent when an archived duplicate has the same fallback phone.
+ALTER TABLE agents
+  DROP CONSTRAINT IF EXISTS agents_city_slug_address_key_phone_key;
+
 CREATE UNIQUE INDEX IF NOT EXISTS agents_unique_office_address_idx
   ON agents (city_slug, address_key)
   WHERE address_key <> 'безофиса' AND merged_into_agent_id IS NULL;
 
 -- The legacy agents.phone column is deliberately retained as a stable fallback.
--- All current reads use agent_phones, so changing it is unnecessary and could
--- collide with an archived duplicate protected by the old unique constraint.
+-- All current reads use agent_phones; address identity for office agents is
+-- enforced by agents_unique_office_address_idx above.
